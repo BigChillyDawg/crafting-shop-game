@@ -9,7 +9,14 @@
     "iron_ore": {
         "name": "Iron Ore",
         "category": "Mining",
-        "rarity": "common",
+        "rarity": "uncommon",
+        "stackable": true,
+        "traits": ["hard", "ore"]
+    },
+    "iron_ingot": {
+        "name": "Iron Ingot",
+        "category": "Mining",
+        "rarity": "rare",
         "stackable": true,
         "traits": ["hard", "mineral"]
     },

@@ -1,0 +1,10 @@
+{
+    "iron_ingot": {
+        "ingredients": {
+            "fire_essence": 1, 
+            "iron_ore": 1
+        },
+        "chance": 75,
+        "amount": 1
+    }
+}

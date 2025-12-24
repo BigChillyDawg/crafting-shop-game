@@ -2,9 +2,13 @@
 
 import item
 from inventory import Inventory
+import crafting
+import json
 
-# Parse the list of items from the json data
+# Parse required JSON data
 item_list = item.load_items("items.json")
+with open("recipes.json", "r") as f:
+    recipes = json.load(f)
 
 # Initialize an inventory object for the user
 inv = Inventory()
@@ -16,11 +20,21 @@ while True:
     print("-" * 100)
     print("Please enter an item to add to your inventory!")
     print("Enter display to show your inventory")
+    print("Enter 'C' for crafting!")
     user_input = input(">> ")
 
     # If user enters 0, exit the program
     if user_input == "0":
         break
+
+    if user_input.lower() == "c":
+        desired_recipe = crafting.crafting_menu()
+        craftable = crafting.can_craft(recipes[desired_recipe], inv)
+        if not craftable:
+            print("You do not have enough items to craft this recipe!")
+        else:
+            crafting.craft(recipes[desired_recipe], inv, item_list, desired_recipe)
+        continue
 
     # Display the user's inventory if they enter display
     if user_input.lower() == "display":
@@ -28,11 +42,27 @@ while True:
         if not inv.inventory_contents():
             print("Inventory is empty!")
             continue
-
-        # Print the name of each item object in the user's inventory and
-        # display quantities
+        
+        # Print inventory title
+        print("\033[1;90m==== INVENTORY ====\033[0m")
+        
+        # Loop through inventory to display items to user
         for key, value in inv.inventory_contents().items():
-            print(f"{key.name}: {value}")
+            # Match rarities to text colors
+            match key.rarity:
+                case "uncommon":
+                    color = "\033[32m"
+                case "rare":
+                    color = "\033[94m"
+                case "epic":
+                    color = "\033[95m"
+                case "legendary":
+                    color = "\033[93m"
+                case _:
+                    color = "\033[90m"
+            
+            # Print item and quanitity formatted with colour
+            print(f"{color}{key.name}\033[0m: {value}")
         continue
     
     # Handles cases where user enters an invalid input
