@@ -28,7 +28,8 @@ while True:
         break
 
     if user_input.lower() == "c":
-        desired_recipe = crafting.crafting_menu()
+        crafting.crafting_menu(inv, recipes, item_list)
+        continue
         craftable = crafting.can_craft(recipes[desired_recipe], inv)
         if not craftable:
             print("You do not have enough items to craft this recipe!")

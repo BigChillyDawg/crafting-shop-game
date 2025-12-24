@@ -3,35 +3,6 @@
 
 import random
 
-def crafting_menu():
-    """
-    Displays crafting menu to the user. Determines the recipe the user would
-    like to craft and returns it's ID as a string.
-
-    Parameters:
-        None
-    
-    Returns:
-        (str): ID of a recipe the user would like to craft.
-    """
-
-    # Display crafting menu to user:
-    print("--- CRAFTING MODE ---")
-
-    # TEMPORARY CRAFTING SYSTEM:
-    print("Enter the item you'd like to craft: ")
-    return input(">> ")
-
-    # LATER CRAFTING SYSTEM:
-
-    # Recieve ingredients
-
-    # Display available recipes and amounts
-
-    # Recieve a recipe from the user
-
-    # Return the recipe
-
 def can_craft(recipe, inventory):
     """
     Compares a users inventory to a recipe to determine if they have enough
@@ -104,3 +75,56 @@ def craft(recipe, inventory, item_list, id):
     # If roll was within crafting chance, add item to user's inventory.
     inventory.add_item(item_list[id], recipe["amount"])
     print(f"You have sucessfully crafted {item_list[id].name}")
+
+def crafting_menu(inventory, recipes, item_list):
+    """
+    Displays crafting menu to the user. Determines the recipe the user would
+    like to craft and returns it's ID as a string.
+
+    Parameters:
+        inventory (object): A valid inventory object
+        recipes (dict): A dictionary containing crafting recipes
+        item_list (dict): A dictionary containing the item registry
+    
+    Returns:
+        (str): ID of a recipe the user would like to craft.
+    """
+
+    # Initialize a list to store available crafting recipes
+    craftables = []
+
+    # Loop through the users inventory to determine what they can craft
+    for recipe, value in recipes.items():
+        if can_craft(value, inventory):
+            craftables.append(recipe)
+
+    # Handle cases where no recipes are available
+    if not craftables:
+        print("No recipes available!")
+        return
+
+    # Initialize formatting for color menu
+    BOLD = "\033[1m"
+    ORANGE = "\033[38;5;208m"
+    RESET = "\033[0m"
+    NAME_WIDTH = 20  # controls alignment
+
+    # Display crafting menu title
+    print(f"\n{BOLD}{ORANGE}=== AVAILABLE RECIPES ==={RESET}\n")
+
+    # Display formatted recipes and ingredients to the user
+    for recipe in craftables:
+        print(f"{BOLD}• {item_list[recipe].name}{RESET} - {recipes[recipe]['chance']}% success rate")
+
+        # Column headers
+        print(f"    {BOLD}{'Ingredient':<{NAME_WIDTH}}Amount{RESET}")
+        print(f"    {'-' * NAME_WIDTH}------")
+
+        # Individual ingredients and amounts
+        for ingredient, amount in recipes[recipe]["ingredients"].items():
+            print(f"    • {item_list[ingredient].name:<{NAME_WIDTH}}x{amount}")
+
+    # Recieve desired input from the user
+    print()
+    print("What would you like to craft? Enter 'none' to exit menu")
+    return input(">> ")
