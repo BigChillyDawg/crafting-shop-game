@@ -37,8 +37,15 @@
     "void_essence": {
         "name": "Void Essence",
         "category": "Essence",
-        "rarity": "Epic",
+        "rarity": "epic",
         "stackable": true,
         "traits": ["magic", "dark"]
+    },
+    "call_of_the_void": {
+        "name": "Call of the Void",
+        "category": "Artifacts",
+        "rarity": "legendary",
+        "stackable": true,
+        "traits": ["magic", "dark", "ancient"]
     }
 }

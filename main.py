@@ -57,7 +57,7 @@ while True:
                 case "epic":
                     color = "\033[95m"
                 case "legendary":
-                    color = "\033[93m"
+                    color = "\033[38;5;208m"
                 case _:
                     color = "\033[90m"
             
