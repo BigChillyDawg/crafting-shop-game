@@ -1,0 +1,37 @@
+{
+    "stone": {
+        "name": "Stone",
+        "category": "Mining",
+        "rarity": "common",
+        "stackable": true,
+        "traits": ["hard"]
+    },
+    "iron_ore": {
+        "name": "Iron Ore",
+        "category": "Mining",
+        "rarity": "common",
+        "stackable": true,
+        "traits": ["hard", "mineral"]
+    },
+    "fire_essence": {
+        "name": "Fire Essence",
+        "category": "Essence",
+        "rarity": "uncommon",
+        "stackable": true,
+        "traits": ["magic", "fire"]
+    },
+    "water_essence": {
+        "name": "Water Essence",
+        "category": "Essence",
+        "rarity": "uncommon",
+        "stackable": true,
+        "traits": ["magic", "aquatic"]
+    },
+    "void_essence": {
+        "name": "Void Essence",
+        "category": "Essence",
+        "rarity": "Epic",
+        "stackable": true,
+        "traits": ["magic", "dark"]
+    }
+}
