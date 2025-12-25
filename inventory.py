@@ -1,6 +1,8 @@
 # inventory.py
 import json
 import os
+import rarity
+from colors import UI_COLORS
 
 class Inventory:
     def __init__(self):
@@ -106,10 +108,10 @@ class Inventory:
         with open("inventory.json", "r") as f:
             inventory_data = json.load(f)
         
-        # Clear the dictionary to prevent duplication
+        # Clear the items dictionary to prevent duplication
         self.items.clear()
 
-        # Add saved items to the inventory
+        # Add saved items and their quantities to the inventory
         for key, value in inventory_data.items():
             self.items[item_list[key]] = value
     
@@ -117,33 +119,20 @@ class Inventory:
         """Prints a color coded inventory contents to the terminal. """
         
         # Print inventory title
-        print("\033[1;90m==== INVENTORY ====\033[0m")
+        print("\n\033[1;90m==== INVENTORY ====\033[0m")
 
         if not self.items:
             print("(Empty)")
         
         # Text formatting
-        RESET = "\033[0m"
-        
-        # Color formatting
-        COMMON_COLOR     = "\033[90m"        # grey
-        UNCOMMON_COLOR   = "\033[32m"        # green
-        RARE_COLOR       = "\033[94m"        # blue
-        EPIC_COLOR       = "\033[95m"        # magenta
-        LEGENDARY_COLOR  = "\033[38;5;208m"  # orange/gold
+        uic = UI_COLORS
 
-        rarity_colors = {
-            "common": COMMON_COLOR,
-            "uncommon": UNCOMMON_COLOR,
-            "rare": RARE_COLOR,
-            "epic": EPIC_COLOR,
-            "legendary": LEGENDARY_COLOR
-        }
-
-        # Loop through inventory to display items to user
-        for key, value in self.items.items():
-            # Print each item and quanitity formatted with color
-            print(f"{rarity_colors[key.rarity]}{key.name}{RESET} {value}x")
+        # Loop through inventory to display items from common to legendary
+        for r in rarity.Rarity:
+            for key, value in self.items.items():
+                if key.rarity == r:
+                    # Print each item and quanitity formatted with color
+                    print(f"{key.rarity.color}{key.name}{uic['reset']} {value}x")
 
         return
             

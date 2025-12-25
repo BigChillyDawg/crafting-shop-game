@@ -2,6 +2,7 @@
 # Contains functions necessary to the crafting system
 
 import time
+from colors import UI_COLORS as uic
 
 def crafting_menu(inventory, recipes, item_list):
     """
@@ -17,19 +18,8 @@ def crafting_menu(inventory, recipes, item_list):
         (Recipe): Recipe() object that the user would like to craft
     """
 
-    # Initialize formatting for color menu
-    BOLD = "\033[1m"
-    ORANGE = "\033[38;5;208m"
-    GREEN =  "\033[92m"
-    RED = "\033[91m"
-    PINK = "\033[95m"
-    RESET = "\033[0m"
-    NAME_WIDTH = 20  # controls alignment
-
-    # Create a map to match indexes to recipes
-    
-
     # Display crafting menu and recieve valid input from the user
+    NAME_WIDTH = 20  # controls alignment
     while True:
         # Initialize placeholders for craftable items and their indexes
         craftables = []
@@ -44,7 +34,7 @@ def crafting_menu(inventory, recipes, item_list):
             print("No recipes available!")
             return
         
-        print(f"\n{BOLD}{ORANGE}=== AVAILABLE RECIPES ==={RESET}\n")
+        print(f"\n{uic['bold']}{uic['orange']}=== AVAILABLE RECIPES ==={uic['reset']}\n")
 
         # Display formatted recipes and ingredients to the user
         for i, recipe in enumerate(craftables, start=1):
@@ -55,21 +45,25 @@ def crafting_menu(inventory, recipes, item_list):
             index_map[str(i)] = recipes[recipe]
 
             # Display recipe name and success rate
-            print(f"{BOLD}{index}{item_list[recipe].name}{RESET} ({recipes[recipe].chance}% success rate)")
+            recipe_color = item_list[recipe].rarity.color
+            print(f"{uic['bold']}{index}{recipe_color}{item_list[recipe].name} {uic['reset']}"
+                  f"({recipes[recipe].chance}% success rate)"
+                  )
 
             # Display individual ingredients and amounts
             for ingredient, amount in recipes[recipe].ingredients.items():
-                print(f"  {PINK}-{RESET} {item_list[ingredient].name:<{NAME_WIDTH}} x{amount}")
-
-        # Recieve desired input from the user
+                ing_color = item_list[ingredient].rarity.color
+                print(f"    {uic['pink']}-{uic['reset']} {ing_color}"
+                      f"{item_list[ingredient].name:<{NAME_WIDTH}}{uic['reset']} x{amount}"
+                      )
+            print()
 
         # Display exit option
         final_index = f"0)".ljust(4)
-        print(f"{BOLD}{final_index}Exit{RESET}")
+        print(f"{uic['bold']}{final_index}Exit{uic['reset']}")
         print()
         
         # Recieve valid input from user
-        
         print("Please enter the number of the recipe you'd like to craft")
         user_input = input(">> ")
 
@@ -86,21 +80,26 @@ def crafting_menu(inventory, recipes, item_list):
         success = recipe_final.craft(inventory, item_list, recipe_final.id)
         
         # Display the crafting animation. Let the user know if crafting succeeded or failed.
+        print()
+        print("=" * 40)
+        print(f"{uic['bold']}{uic['orange']}Crafting Mode{uic['reset']}")
         print("Crafting", end="", flush=True)
         for i in range(3):
             time.sleep(0.5)
             print(".", end="", flush=True)
         if success:
-            print(f"{GREEN}success!{RESET}", flush=True)
+            print(f"{uic['green']} success!{uic['reset']}", flush=True)
             time.sleep(0.5)
-            print(f"{recipe_final.output}x {item_list[recipe_final.id].name} has been added to your inventory", flush=True)
-            time.sleep(0.75)
+            item_name = item_list[recipe_final.id].name
+            item_color = item_list[recipe_final.id].rarity.color
+            print(f"{recipe_final.output}x {item_color}{item_name}{uic['reset']} has been added to your inventory", flush=True)
         else:
-            print(f"{RED}failed.{RESET}", flush=True)
+            print(f"{uic['red']} failed.{uic['reset']}", flush=True)
             time.sleep(0.5)
             print(f"Ingredients have been lost!", flush= True)
-            time.sleep(0.75)
-
+            
+        print("=" * 40)
+        time.sleep(0.75)
         # Prompt the user for another input
         continue
     # When user chooses to exit, return

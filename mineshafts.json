@@ -1,0 +1,17 @@
+{
+    "abandoned_shaft": {
+        "name": "Abandoned Shaft",
+        "color": "mine_brown",
+        "drops": {
+            "stone": {
+                "weight": 60,
+                "amount": 1
+            },
+            "iron_ore": {
+                "weight": 5,
+                "amount": 1
+            }
+        }
+    }
+}
+

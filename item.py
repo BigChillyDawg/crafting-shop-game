@@ -1,6 +1,7 @@
 # item.py
 
 import json
+from rarity import Rarity
 
 # Item class, holds a name and other traits for ease of use across numerous games.
 class Item:
@@ -29,11 +30,19 @@ def load_items(filename):
     with open(filename, "r") as f:
         item_json = json.load(f)
 
+    # Map rarity strings to rarity objects
+    rarity_map = {
+        "common": Rarity.COMMON,
+        "uncommon": Rarity.UNCOMMON,
+        "rare": Rarity.RARE,
+        "epic": Rarity.EPIC,
+        "legendary": Rarity.LEGENDARY
+    }
 
     item_registry = {}
     # Converts item data into valid item objects.
     # Stores the items and their IDs and returns them as a dictionary.
     for id, item_data in item_json.items():
-        item_registry[id] = Item(id, item_data["name"], item_data["category"], item_data["rarity"], item_data["stackable"], item_data["traits"])
+        item_registry[id] = Item(id, item_data["name"], item_data["category"], rarity_map[item_data["rarity"]], item_data["stackable"], item_data["traits"])
 
     return item_registry
