@@ -1,5 +1,5 @@
 from enum import IntEnum
-from colors import UI_COLORS
+from ui.colors import UI_COLORS
 
 class Rarity(IntEnum):
     COMMON = 1

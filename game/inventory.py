@@ -1,8 +1,7 @@
 # inventory.py
 import json
-import os
-import rarity
-from colors import UI_COLORS
+import game.rarity as rarity
+from ui.colors import UI_COLORS
 
 class Inventory:
     def __init__(self):
@@ -62,77 +61,8 @@ class Inventory:
         if self.items[item] == 0:
             del self.items[item]
         
-
     def inventory_contents(self):
         """ Returns a copy of the inventory's contents. """
         items = self.items.copy()
         return items
-    
-    def save_inventory(self):
-        """
-        Saves the user's inventory to a json file.
-        
-        Parameters:
-            None
-        
-        Returns:
-            None
-        """
-
-        # Initialize and store ID's and quantities in a new dictionary.
-        id_inventory = {}
-        for key, value in self.items.items():
-            id_inventory[key.id] = value
-
-        # Save the new dictionary to a JSON file
-        with open("inventory.json", "w") as f:
-            json.dump(id_inventory, f)
-
-    def load_inventory(self, item_list):
-        """
-        Loads saved data from a JSON file to the inventory. Converts ID's to
-        item objects.
-        
-        Parameters:
-            item_list (dict): Dictionary mapping item ID's to item objects.
-        
-        Returns:
-            None
-        """
-
-        # Check if the file exists to prevent errors
-        if not os.path.exists("inventory.json"):
-            return
-        
-        # Open inventory json file and load it into a dictionary.
-        with open("inventory.json", "r") as f:
-            inventory_data = json.load(f)
-        
-        # Clear the items dictionary to prevent duplication
-        self.items.clear()
-
-        # Add saved items and their quantities to the inventory
-        for key, value in inventory_data.items():
-            self.items[item_list[key]] = value
-    
-    def display_inventory(self):
-        """Prints a color coded inventory contents to the terminal. """
-        
-        # Print inventory title
-        print("\n\033[1;90m==== INVENTORY ====\033[0m")
-
-        if not self.items:
-            print("(Empty)")
-        
-        # Text formatting
-        uic = UI_COLORS
-
-        # Loop through inventory to display items from common to legendary
-        for r in rarity.Rarity:
-            for key, value in self.items.items():
-                if key.rarity == r:
-                    # Print each item and quanitity formatted with color
-                    print(f"{key.rarity.color}{key.name}{uic['reset']} {value}x")
-
-        return
             

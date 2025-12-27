@@ -1,4 +1,3 @@
-import json
 from random import random
 
 class Recipe:
@@ -78,29 +77,3 @@ class Recipe:
         # If roll was within crafting chance, add item to user's inventory.
         inventory.add_item(item_list[id], self.output)
         return True
-
-def load_recipes(filename):
-    """ 
-    Loads recipes from a JSON data file into a dictionary containing ID's
-    as keys and recipe objects as values. Creates Recipe() objects using 
-    properties specified in the given file.
-    
-    Parameters:
-        filename (str): The name of a json file to pull data from.
-    
-    Returns:
-        (dict): A dictionary containing id's as keys and recipes as values.
-    """
-
-    # Open the json data file and return parse it into a dictionary
-    with open(filename, "r") as f:
-        recipe_json = json.load(f)
-
-
-    recipe_registry = {}
-    # Converts item data into valid item objects.
-    # Stores the items and their IDs and returns them as a dictionary.
-    for id, recipe in recipe_json.items():
-        recipe_registry[id] = Recipe(id, recipe["ingredients"], recipe["chance"], recipe["amount"])
-
-    return recipe_registry

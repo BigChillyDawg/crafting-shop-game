@@ -1,33 +1,40 @@
 # main.py
 
-import item
-import recipe
-import crafting
-import mineshaft
-from colors import UI_COLORS
-from inventory import Inventory
-import json
+import paths
+# ===== Game imports =====
+import game.item as item
+import game.recipe as recipe
+import game.mineshaft as mineshaft
+import game.save_manager as save_manager
+import game.menus as menus
+
+from game.inventory import Inventory
+
+# ===== UI Imports =====
+from ui.colors import UI_COLORS
+from ui.screens import welcome_screen, display_inventory
 
 # Parse required JSON data
-item_list = item.load_items("items.json")
-recipes = recipe.load_recipes("recipes.json")
-mineshafts = mineshaft.load_mineshafts("mineshafts.json")
+item_list = save_manager.load_items(paths.ITEM_FILE)
+recipes = save_manager.load_recipes(paths.RECIPES_FILE)
+mineshafts = save_manager.load_mineshafts(paths.MINESHAFTS_FILE)
 
-# Initialize an inventory object for the user
+# Initialize an empty inventory and load contents from save data
 inv = Inventory()
-# Load in the user's inventory from their previous sessions
-inv.load_inventory(item_list)
+save_manager.load_inventory(inv, item_list, paths.INVENTORY_SAVE)
 
 # Colors for use in menu
 GREY = UI_COLORS["grey"]
 RESET = UI_COLORS["reset"]
 
+# Display Welcome Message
+welcome_screen()
+
 while True:
-    
     # Display menu to the user and recieve an input
     print()
     print("=" * 40)
-    inv.display_inventory()
+    display_inventory(inv)
     print()
     print(f"{GREY}=== Choose Option ==={RESET}")
     print("1) Crafting")
@@ -46,12 +53,12 @@ while True:
 
     # Enter crafting menu when user specifies
     if user_input == "1":
-        crafting.crafting_menu(inv, recipes, item_list)
+        menus.crafting_menu(inv, recipes, item_list)
 
     # Enter mining menu when user specifies
     if user_input == "2":
-        mineshaft.mining_menu(inv, mineshafts, item_list)
+        menus.mining_menu(inv, mineshafts, item_list)
 
 # Save the inventory contents for next program instance
-inv.save_inventory()
+save_manager.save_inventory(inv, paths.INVENTORY_SAVE)
 print("Your game has been saved. Thank you for playing!")

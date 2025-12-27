@@ -1,0 +1,14 @@
+{
+    "abandoned_shaft": {
+        "iron_supports": {
+            "description": "Upgrade to an iron support system, so you can focus on what matters most.",
+            "features": "Doubles iron ore chance",
+            "new_drops": {},
+            "drop_modifier": {
+                "iron_ore": 2
+            },
+            "rarity_modifier": {},
+            "cooldown_modifier": "none"
+        }
+    }
+}

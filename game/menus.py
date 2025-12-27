@@ -1,9 +1,98 @@
-# crafting.py
-# Contains functions necessary to the crafting system
-
+# menus.py
 import time
-from colors import UI_COLORS as uic
+from ui.colors import UI_COLORS as uic
 
+# ===== Mining Menus =====
+def mining_menu(inventory, mineshafts, item_list):
+    """
+    Displays mining menu to the user. Determines the shaft the user would
+    like to mine in and processes any actions they'd like to take.
+
+    Parameters:
+        inventory (object): A valid inventory object
+        mineshafts (dict): A dictionary containing the mineshafts registry
+        item_list (dict): A dictionary containing the item registry
+    
+    Returns:
+        None
+    """
+    while True:
+        index_map = {}
+        print(f"\n{uic['bold']}{uic['warm_brown']}=== MINING ==={uic['reset']}\n")
+
+        # Display formatted mineshafts to the user
+        for i, mineshaft in enumerate(mineshafts.values(), start=1):
+            # Format the index and spacing that comes before each mineshaft
+            index = f"{i})".ljust(4)
+
+            # Match indexes to mineshafts and store them in index_map
+            index_map[str(i)] = mineshaft
+
+            # Display formatted mineshaft name
+            color = uic[mineshaft.color]
+            print(f"{uic['bold']}{index}{color}{mineshaft.name}{uic['reset']}")
+
+            # Display drops, up to three total
+            i = 0
+            print("    Drops: ", end="")
+            for drop in mineshaft.drops:
+                # If there are more than three drops, display ... to imply more
+                if i == 3:
+                    print("... |", end="")
+                    break
+                item = item_list[drop]
+                print(f"{item.rarity.color}{item.name}{uic['reset']} | ", end="")
+            print("\n")
+    
+        # Display exit option
+        final_index = f"0)".ljust(4)
+        print(f"{uic['bold']}{final_index}Exit{uic['reset']}")
+        print()
+
+        # Recieve valid input from user
+        print("Enter a shaft number to mine")
+        user_input = input(">> ")
+
+        # Leave mining area when user chooses to exit
+        if user_input.lower() == '0':
+            break
+
+        # Handle invalid inputs
+        if user_input not in index_map:
+            print("Invalid input! Please try again")
+            continue
+
+        # Map the selected index to a Mineshaft() object
+        mineshaft = index_map[user_input]
+
+        # We are assuming entering an index automatically mines for now
+
+        # Display mining animation
+
+        print()
+        print("=" * 40)
+        print(f"You have entered {uic['bold']}"
+              f"{uic[mineshaft.color]}{mineshaft.name}{uic['reset']}"
+              f"", flush=True)
+        time.sleep(0.5)
+        print(f"Mining", end="", flush=True)
+        for i in range(3):
+            time.sleep(0.33)
+            print(".", end="", flush=True)
+        print()
+
+        # Complete the mine() action and store the result
+        result = mineshaft.mine(inventory, item_list)
+        for item, amount in result.items():
+            print(f"You recieved {item.rarity.color}{item.name}{uic['reset']} x{amount}")
+            print(("=" * 40), flush=True)
+            time.sleep(0.75)
+
+        # FUTURE:
+        # Display mineshafts menu
+        # mineshaft.menu()
+
+# ===== Crafting Menus =====
 def crafting_menu(inventory, recipes, item_list):
     """
     Displays crafting menu to the user. Determines the recipe the user would
@@ -28,11 +117,6 @@ def crafting_menu(inventory, recipes, item_list):
         for id, recipe in recipes.items():
             if recipe.can_craft(inventory):
                 craftables.append(id)
-
-        # Handle cases where no recipes are available
-        if not craftables:
-            print("No recipes available!")
-            return
         
         print(f"\n{uic['bold']}{uic['orange']}=== AVAILABLE RECIPES ==={uic['reset']}\n")
 
@@ -57,6 +141,10 @@ def crafting_menu(inventory, recipes, item_list):
                       f"{item_list[ingredient].name:<{NAME_WIDTH}}{uic['reset']} x{amount}"
                       )
             print()
+
+        # Handle cases where no recipes are available
+        if not craftables:
+            print(f"{uic['italic']}{uic['grey']}No recipes available!{uic['reset']}\n")
 
         # Display exit option
         final_index = f"0)".ljust(4)
