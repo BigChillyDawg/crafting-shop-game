@@ -13,8 +13,13 @@
                 "amount": 1,
                 "unlocked": true
             },
+            "fire_essence": {
+                "weight": 10,
+                "amount": 1,
+                "unlocked": true
+            },
             "gold_ore": {
-                "weight": 1000,
+                "weight": 2,
                 "amount": 1,
                 "unlocked": false
             }

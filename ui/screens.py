@@ -64,3 +64,39 @@ def display_inventory(inventory):
                 print(f"{key.rarity.color}{key.name}{uic['reset']} {value}x")
 
     return
+
+def travelling_screen(location, color):
+    """
+    Displays an animated screen to a location with a specified color
+
+    Parameters:
+        location (str): The name of the location being travelled to
+        color (str): Color code for the name of the location
+
+    Returns:
+        None
+    """
+    clear_screen()
+    travelling = "Travelling to "
+
+    for char in travelling:
+        print(char, end="", flush=True)
+        time.sleep(0.07)
+    
+    for char in location:
+        print(f"{uic['bold']}{color}{char}{uic['reset']}", end="", flush=True)
+        time.sleep(0.07)
+
+    for char in '...':
+        print(char, end="", flush=True)
+        time.sleep(0.2)
+
+def invalid_input_screen():
+    """ Displays an invalid input screen. """
+    invalid = "Invalid input!"
+    
+    for char in invalid:
+        print(f"{uic['bold']}{uic['grey']}{char}{uic['reset']}", end="", flush=True)
+        time.sleep(0.07)
+    
+    time.sleep(0.2)

@@ -3,9 +3,11 @@ UI_COLORS = {
     "grey": "\033[90m",
     "orange": "\033[38;5;208m",
     "green": "\033[92m",
+    "neon_green": "\033[38;5;46m",
     "red": "\033[91m",
     "pink": "\033[95m",
     "arcane_purple": "\033[38;5;135m",
+    "off_white": "\033[38;5;250m",
     
     # Mining colors
     "warm_brown": "\033[38;5;94m",

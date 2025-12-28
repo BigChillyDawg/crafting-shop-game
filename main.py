@@ -23,6 +23,8 @@ save_manager.load_inventory(inv, item_list, paths.INVENTORY_SAVE)
 
 # Load any purchased upgrades
 progression.apply_upgrades(mineshafts, paths.UPGRADES_FILE, paths.UPGRADES_SAVE)
+for mineshaft in mineshafts.values():
+    state_manager.update_drops(mineshaft)
 
 # Colors for use in menu
 GREY = UI_COLORS["grey"]
@@ -58,7 +60,7 @@ while True:
 
     # Enter mining menu when user specifies
     if user_input == "2":
-        menus.mining_menu(inv, mineshafts, item_list)
+        menus.mining_menu(inv, mineshafts, item_list, paths.UPGRADES_FILE, paths.UPGRADES_SAVE)
 
 # Save the inventory contents for next program instance
 save_manager.save_inventory(inv, paths.INVENTORY_SAVE)

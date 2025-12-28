@@ -8,7 +8,7 @@ SAVE = ROOT / "save_data"
 
 # Save data
 INVENTORY_SAVE = SAVE / "inventory.json"
-UPGRADES_SAVE = SAVE / "owned_upgrades"
+UPGRADES_SAVE = SAVE / "owned_upgrades.json"
 
 # Game data
 ITEM_FILE = DATA / "items.json"

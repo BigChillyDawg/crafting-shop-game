@@ -4,6 +4,7 @@
             "label": "Iron Supports",
             "description": "Upgrade to an iron support system, so you can focus on what matters most.",
             "features": "Doubles iron ore chance",
+            "requires" : [],
             "cost": {
                 "iron_ingot": 2
             },
@@ -18,6 +19,7 @@
             "label": "Prospecting I",
             "description": "Go searching for the next best thing.",
             "features": "Unlocks gold ore",
+            "requires" : [],
             "cost": {
                 "stone": 5
             },

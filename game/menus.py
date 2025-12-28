@@ -1,12 +1,212 @@
 # menus.py
 import time
+from ui.screens import travelling_screen, invalid_input_screen, clear_screen
 from ui.colors import UI_COLORS as uic
 from game.progression import buy_upgrade, apply_upgrades
 from paths import UPGRADES_SAVE, UPGRADES_FILE
 from game.state_manager import update_drops
+import json
 
 # ===== Mining Menus =====
-def mining_menu(inventory, mineshafts, item_list):
+def mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, upgrades_save):
+    """
+    Displays an individual mineshafts menu. Displaying features such as its
+    upgrades, cooldown and drop rates.
+    
+    mineshaft (object): A Mineshaft() object that the user has entered
+    inventory (object): A player Inventory()
+    item_list (dict): A dictionary mapping item IDs to Item() objects
+    upgrades_data (object): A valid Path() object to a JSON file containing
+                                upgrade information.
+    upgrades_save (object): A valid Path() object to a JSON file containing
+                            save info of upgrades a player has unlocked.
+
+    Returns:
+        None
+    """
+    while True:
+        divider_length = 40
+        cooldown = "Ready"
+        # ===== Title =====
+        print()
+        print(f"{uic['bold']}{uic[mineshaft.color]}===== {mineshaft.name.upper()} ===== {uic['reset']}")
+        print()
+        # ===== Cooldown =====
+        print(f"Cooldown: {cooldown}")
+        print()
+        # ====== DROPS =====
+        print("-" * divider_length)
+        print("DROPS")
+        print("-" * divider_length)
+
+        # Sum total drop weights, create a loot table using weightings
+        loot_table = {}
+        total_weight = 0
+        for drop, value in mineshaft.drops.items():
+            if value["unlocked"] == True:
+                total_weight += value["weight"]
+                loot_table[drop] = total_weight
+
+        # Display drops and drop rates from the loot table, sorted by rarity
+        for drop in sorted(loot_table, key=lambda d: mineshaft.drops[d]['weight'], reverse=True):
+            item = item_list[drop]
+            print(f"{item.rarity.color}{item.name:<20}{uic['reset']}{(mineshaft.drops[drop]['weight'] / total_weight * 100):.2f}%")
+        print("\n")
+
+        # ===== UPGRADES =====
+        print("-" * divider_length)
+        print("UPGRADES")
+        print("-" * divider_length)
+
+        # Owned upgrades
+        if upgrades_save.exists():
+            with upgrades_save.open('r') as f:
+                owned_upgrades = json.load(f)['owned']
+        else:
+            owned_upgrades = []
+
+        check = chr(10003)
+        # Display owned upgrades to the user
+        for id, upgrade in mineshaft.upgrades.items():
+            if id in owned_upgrades:
+                print(f"[{uic['neon_green']}{check}{uic['reset']}] {uic['bold']}{upgrade['label']}{uic['reset']}")
+                print(f"    {uic['grey']}{chr(8226)}{uic['italic']}{upgrade['description']}{uic['reset']}")
+                print(f"    {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
+                print()
+
+        # Display available upgrades to the user, ensure none are locked
+        for id, upgrade in mineshaft.upgrades.items():
+            # Check if the requirements for the upgrade are met
+            locked = False
+            for requirement in upgrade['requires']:
+                if requirement not in owned_upgrades:
+                    locked = True
+                    break
+            # If requirements aren't met, move onto the next upgrade
+            if locked == True:
+                continue
+            if id not in owned_upgrades:
+                print(f"[] {uic['bold']}{upgrade['label']}{uic['reset']}")
+                print(f"    {chr(8226)} {uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
+                print(f"    {chr(8226)} {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
+                print(f"    {chr(8226)}Cost:")
+                for item, amount in upgrade['cost'].items():
+                    print(" " * 6, end="")
+                    print(f"{uic['pink']}- {uic['reset']}", end="")
+                    print(f"{uic['off_white']}{item_list[item].name}{uic['reset']} {amount}x")
+                    print()
+        
+        # ===== Actions =====
+        print()
+        print("1) Mine")
+        print("2) Purchase Upgrades")
+        print("0) Return to Mining Menu")
+        user_input = input(">> ")
+        
+        # Handle invalid inputs
+        if user_input not in ['0', '1', '2']:
+            invalid_input_screen()
+            clear_screen()
+            continue
+        
+        # Return to mining menu
+        if user_input == '0':
+            clear_screen()
+            travelling_screen("The Mine", uic['warm_brown'])
+            break
+
+        # ===== Mine =====
+        if user_input == '1':
+            print(f"Mining", end="", flush=True)
+            for i in range(3):
+                time.sleep(0.33)
+                print(".", end="", flush=True)
+            print()
+
+            # Complete the mine() action and store the result
+            result = mineshaft.mine(inventory, item_list, loot_table)
+            for item, amount in result.items():
+                print(f"You recieved {item.rarity.color}{item.name}{uic['reset']} x{amount}")
+                print(("=" * 40), flush=True)
+                time.sleep(0.75)
+            continue
+
+        # ===== Buy Upgrades =====
+        if user_input == '2':
+            while True:
+                print()
+                print(f"{uic['bold']}{uic['orange']}===== Avaialble Upgrades ===== {uic['reset']}")
+                # Display available upgrades and their cost, along with an index 
+                index_map = {}
+                i = 0
+                for id, upgrade in mineshaft.upgrades.items():
+                    # Check if the requirements for the upgrade are met
+                    locked = False
+                    for requirement in upgrade['requires']:
+                        if requirement not in owned_upgrades:
+                            locked = True
+                            break
+                    # If requirements aren't met, move onto the next upgrade
+                    if locked == True:
+                        continue
+                    if id not in owned_upgrades:
+                        i += 1
+                        index_map[str(i)] = id
+                        index = f"{i})".ljust(4)
+                        print(f"{index}{uic['bold']}{upgrade['label']}{uic['reset']}")
+                        print(f"    {chr(8226)}{uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
+                        print(f"    {chr(8226)}{uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
+                        print(f"    {chr(8226)}Cost:")
+                        for item, amount in upgrade['cost'].items():
+                            print(" " * 6, end="")
+                            print(f"{uic['pink']}- {uic['reset']}", end="")
+                            print(f"{uic['off_white']}{item_list[item].name}{uic['reset']} {amount}x")
+                            print()
+                print("0) Return to Mineshaft")
+                print()
+
+                # ===== Upgrade Actions =====
+
+                
+                print("Enter the number of the upgrade you wish to purchase")
+                upgrade_choice = input(">> ")
+
+                # Return to Mineshaft menu when specified
+                if upgrade_choice == '0':
+                    break
+
+                # Handle invalid inputs
+                if upgrade_choice not in index_map:
+                    invalid_input_screen()
+                    continue
+
+                # Attempt to buy upgrade user specified
+                upgrade_id = index_map[upgrade_choice]
+                upgrade_cost = mineshaft.upgrades[upgrade_id]['cost']
+
+                # Check if user has enough items for the upgrade in the inventory
+                for id, amount in upgrade_cost.items():
+                    if item_list[id] in inventory.items and inventory.items[item_list[id]] >= amount:
+                        buy_upgrade(mineshaft, upgrade_id, inventory, item_list, upgrades_save)
+                        apply_upgrades(mineshafts, upgrades_data, upgrades_save)
+                        update_drops(mineshaft)
+                        upgrade_name = mineshaft.upgrades[upgrade_id]['label']
+                        message = f"You have sucessfully purchased {uic['bold']}{uic['green']}{upgrade_name}{uic['reset']}!"
+                        for char in message:
+                            print(f"{uic['bold']}{uic['neon_green']}{char}{uic['reset']}", end="", flush=True)
+                            time.sleep(0.07)
+                        clear_screen()
+                    else:
+                        # Display an invalid input animation, then clear the screen
+                        print()
+                        message = "You don't have enough items!"
+                        for char in message:
+                            print(f"{uic['italic']}{uic['off_white']}{char}{uic['reset']}", end="", flush=True)
+                            time.sleep(0.07)
+                        print()
+                        break
+
+def mining_menu(inventory, mineshafts, item_list, upgrades_data, upgrades_save):
     """
     Displays mining menu to the user. Determines the shaft the user would
     like to mine in and processes any actions they'd like to take.
@@ -34,24 +234,7 @@ def mining_menu(inventory, mineshafts, item_list):
             # Display formatted mineshaft name
             color = uic[mineshaft.color]
             print(f"{uic['bold']}{index}{color}{mineshaft.name}{uic['reset']}")
-
-            # Check which drops are currently unlocked and add them to a dictionary
-            current_drops = {}
-            for id, value in mineshaft.drops.items():
-                if value["unlocked"] == True:
-                    current_drops[id] = value
-
-            # Display drops, up to three total
-            i = 0
-            print("    Drops: ", end="")
-            for drop in current_drops:
-                # If there are more than three drops, display ... to imply more
-                if i == 3:
-                    print("... |", end="")
-                    break
-                item = item_list[drop]
-                print(f"{item.rarity.color}{item.name}{uic['reset']} | ", end="")
-            print("\n")
+            print()
     
         # Display exit option
         final_index = f"0)".ljust(4)
@@ -59,19 +242,13 @@ def mining_menu(inventory, mineshafts, item_list):
         print()
 
         # Recieve valid input from user
-        print("Enter a shaft number to mine")
+        print(f"Enter the {uic['bold']}number{uic['reset']} of the shaft" 
+              f" you wish to {uic['bold']}travel to!{uic['reset']}")
         user_input = input(">> ")
 
         # Leave mining area when user chooses to exit
         if user_input.lower() == '0':
             break
-
-        # =============== PROTOTYPE UPGRADE SYSTEM =======================
-        if user_input.lower() == 'test':
-            buy_upgrade(index_map["1"], "prospecting_1", inventory, item_list, UPGRADES_SAVE)
-            apply_upgrades(mineshafts, UPGRADES_FILE, UPGRADES_SAVE)
-            update_drops(mineshaft)
-            continue
 
         # Handle invalid inputs
         if user_input not in index_map:
@@ -81,32 +258,12 @@ def mining_menu(inventory, mineshafts, item_list):
         # Map the selected index to a Mineshaft() object
         mineshaft = index_map[user_input]
 
-        # We are assuming entering an index automatically mines for now
+        # Display travelling animation
+        travelling_screen(mineshaft.name, uic[mineshaft.color])
+        
+        # Display mineshaft menu
 
-        # Display mining animation
-
-        print()
-        print("=" * 40)
-        print(f"You have entered {uic['bold']}"
-              f"{uic[mineshaft.color]}{mineshaft.name}{uic['reset']}"
-              f"", flush=True)
-        time.sleep(0.5)
-        print(f"Mining", end="", flush=True)
-        for i in range(3):
-            time.sleep(0.33)
-            print(".", end="", flush=True)
-        print()
-
-        # Complete the mine() action and store the result
-        result = mineshaft.mine(inventory, item_list)
-        for item, amount in result.items():
-            print(f"You recieved {item.rarity.color}{item.name}{uic['reset']} x{amount}")
-            print(("=" * 40), flush=True)
-            time.sleep(0.75)
-
-        # FUTURE:
-        # Display mineshafts menu
-        # mineshaft.menu()
+        mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, upgrades_save)
 
 # ===== Crafting Menus =====
 def crafting_menu(inventory, recipes, item_list):
