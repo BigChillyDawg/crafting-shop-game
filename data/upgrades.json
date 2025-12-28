@@ -1,12 +1,28 @@
 {
     "abandoned_shaft": {
         "iron_supports": {
+            "label": "Iron Supports",
             "description": "Upgrade to an iron support system, so you can focus on what matters most.",
             "features": "Doubles iron ore chance",
+            "cost": {
+                "iron_ingot": 2
+            },
             "new_drops": {},
             "drop_modifier": {
                 "iron_ore": 2
             },
+            "rarity_modifier": {},
+            "cooldown_modifier": "none"
+        },
+        "prospecting_1":  {
+            "label": "Prospecting I",
+            "description": "Go searching for the next best thing.",
+            "features": "Unlocks gold ore",
+            "cost": {
+                "stone": 5
+            },
+            "new_drops": ["gold_ore"],
+            "drop_modifier": {},
             "rarity_modifier": {},
             "cooldown_modifier": "none"
         }

@@ -33,8 +33,9 @@ class Mineshaft:
         loot_table = {}
         total_weight = 0
         for drop, value in self.drops.items():
-            total_weight += value["weight"]
-            loot_table[drop] = total_weight
+            if value["unlocked"] == True:
+                total_weight += value["weight"]
+                loot_table[drop] = total_weight
 
         # Recieve a roll within the total weight range. Return the corresponding
         # item from the loot table.
@@ -57,6 +58,7 @@ class Mineshaft:
 
         return rewards
     
+    # MOVE THIS FUNCTION TO MENUS
     def menu(self, inventory, item_list):
         while True: 
             print()

@@ -1,8 +1,4 @@
 # inventory.py
-import json
-import game.rarity as rarity
-from ui.colors import UI_COLORS
-
 class Inventory:
     def __init__(self):
         self.items = {}

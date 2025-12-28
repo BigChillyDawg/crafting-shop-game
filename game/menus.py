@@ -1,6 +1,9 @@
 # menus.py
 import time
 from ui.colors import UI_COLORS as uic
+from game.progression import buy_upgrade, apply_upgrades
+from paths import UPGRADES_SAVE, UPGRADES_FILE
+from game.state_manager import update_drops
 
 # ===== Mining Menus =====
 def mining_menu(inventory, mineshafts, item_list):
@@ -32,10 +35,16 @@ def mining_menu(inventory, mineshafts, item_list):
             color = uic[mineshaft.color]
             print(f"{uic['bold']}{index}{color}{mineshaft.name}{uic['reset']}")
 
+            # Check which drops are currently unlocked and add them to a dictionary
+            current_drops = {}
+            for id, value in mineshaft.drops.items():
+                if value["unlocked"] == True:
+                    current_drops[id] = value
+
             # Display drops, up to three total
             i = 0
             print("    Drops: ", end="")
-            for drop in mineshaft.drops:
+            for drop in current_drops:
                 # If there are more than three drops, display ... to imply more
                 if i == 3:
                     print("... |", end="")
@@ -56,6 +65,13 @@ def mining_menu(inventory, mineshafts, item_list):
         # Leave mining area when user chooses to exit
         if user_input.lower() == '0':
             break
+
+        # =============== PROTOTYPE UPGRADE SYSTEM =======================
+        if user_input.lower() == 'test':
+            buy_upgrade(index_map["1"], "prospecting_1", inventory, item_list, UPGRADES_SAVE)
+            apply_upgrades(mineshafts, UPGRADES_FILE, UPGRADES_SAVE)
+            update_drops(mineshaft)
+            continue
 
         # Handle invalid inputs
         if user_input not in index_map:

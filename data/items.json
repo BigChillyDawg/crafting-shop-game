@@ -13,6 +13,13 @@
         "stackable": true,
         "traits": ["hard", "ore"]
     },
+    "gold_ore": {
+        "name": "Gold Ore",
+        "category": "Mining",
+        "rarity": "rare",
+        "stackable": true,
+        "traits": ["hard", "ore"]
+    },
     "iron_ingot": {
         "name": "Iron Ingot",
         "category": "Mining",
