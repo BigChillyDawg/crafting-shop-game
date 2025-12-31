@@ -2,9 +2,7 @@
 import time
 from ui.screens import travelling_screen, invalid_input_screen, clear_screen
 from ui.colors import UI_COLORS as uic
-from game.progression import buy_upgrade, apply_upgrades
-from paths import UPGRADES_SAVE, UPGRADES_FILE
-from game.state_manager import update_drops
+from game.progression import buy_upgrade
 import json
 
 # ===== Mining Menus =====
@@ -89,7 +87,7 @@ def mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, u
                 print(f"[] {uic['bold']}{upgrade['label']}{uic['reset']}")
                 print(f"    {chr(8226)} {uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
                 print(f"    {chr(8226)} {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
-                print(f"    {chr(8226)}Cost:")
+                print(f"    {chr(8226)} {uic['off_white']}Cost:{uic['reset']}")
                 for item, amount in upgrade['cost'].items():
                     print(" " * 6, end="")
                     print(f"{uic['pink']}- {uic['reset']}", end="")
@@ -135,7 +133,7 @@ def mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, u
         if user_input == '2':
             while True:
                 print()
-                print(f"{uic['bold']}{uic['orange']}===== Avaialble Upgrades ===== {uic['reset']}")
+                print(f"{uic['bold']}{uic['orange']}===== Available Upgrades ===== {uic['reset']}")
                 # Display available upgrades and their cost, along with an index 
                 index_map = {}
                 i = 0
@@ -149,6 +147,7 @@ def mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, u
                     # If requirements aren't met, move onto the next upgrade
                     if locked == True:
                         continue
+                    # If user doesn't already own the upgrade, add it to the list
                     if id not in owned_upgrades:
                         i += 1
                         index_map[str(i)] = id
@@ -184,27 +183,36 @@ def mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, u
                 upgrade_id = index_map[upgrade_choice]
                 upgrade_cost = mineshaft.upgrades[upgrade_id]['cost']
 
-                # Check if user has enough items for the upgrade in the inventory
+                # Compare user inventory to each item to check affordability.
+                affordable = True
                 for id, amount in upgrade_cost.items():
-                    if item_list[id] in inventory.items and inventory.items[item_list[id]] >= amount:
-                        buy_upgrade(mineshaft, upgrade_id, inventory, item_list, upgrades_save)
-                        apply_upgrades(mineshafts, upgrades_data, upgrades_save)
-                        update_drops(mineshaft)
-                        upgrade_name = mineshaft.upgrades[upgrade_id]['label']
-                        message = f"You have sucessfully purchased {uic['bold']}{uic['green']}{upgrade_name}{uic['reset']}!"
-                        for char in message:
-                            print(f"{uic['bold']}{uic['neon_green']}{char}{uic['reset']}", end="", flush=True)
-                            time.sleep(0.07)
-                        clear_screen()
-                    else:
-                        # Display an invalid input animation, then clear the screen
+                    if (item_list[id] in inventory.items and inventory.items[item_list[id]] < amount) \
+                        or item_list[id] not in inventory.items:
+                        # If user didn't have enough of a required item
+                        # let them know and flag affordability
                         print()
                         message = "You don't have enough items!"
                         for char in message:
                             print(f"{uic['italic']}{uic['off_white']}{char}{uic['reset']}", end="", flush=True)
                             time.sleep(0.07)
                         print()
+                        affordable = False
                         break
+
+                # Check if user had all required items.
+                if affordable == False:
+                    continue
+
+                # If user has all the required items, complete purchase.
+                owned_upgrades.append(upgrade_id)
+                buy_upgrade(mineshaft, upgrade_id, inventory, item_list, upgrades_save)
+                # Display sucessful purchase message
+                upgrade_name = mineshaft.upgrades[upgrade_id]['label']
+                message = f"You have sucessfully purchased {upgrade_name}!"
+                for char in message:
+                    print(f"{uic['bold']}{uic['neon_green']}{char}{uic['reset']}", end="", flush=True)
+                    time.sleep(0.07)
+                clear_screen()
 
 def mining_menu(inventory, mineshafts, item_list, upgrades_data, upgrades_save):
     """

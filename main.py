@@ -3,7 +3,6 @@
 import paths
 # ===== Game imports =====
 import game.save_manager as save_manager
-import game.state_manager as state_manager
 import game.progression as progression
 import game.menus as menus
 from game.inventory import Inventory
@@ -22,9 +21,7 @@ inv = Inventory()
 save_manager.load_inventory(inv, item_list, paths.INVENTORY_SAVE)
 
 # Load any purchased upgrades
-progression.apply_upgrades(mineshafts, paths.UPGRADES_FILE, paths.UPGRADES_SAVE)
-for mineshaft in mineshafts.values():
-    state_manager.update_drops(mineshaft)
+progression.load_upgrades(mineshafts, paths.UPGRADES_FILE, paths.UPGRADES_SAVE)
 
 # Colors for use in menu
 GREY = UI_COLORS["grey"]

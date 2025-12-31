@@ -71,7 +71,7 @@ class Recipe:
         roll = random()
 
         # If roll exceeds the crafting chance, crafting failed. Return early.
-        if roll >= self.chance / 100:
+        if roll > self.chance / 100:
             return False
         
         # If roll was within crafting chance, add item to user's inventory.

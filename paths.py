@@ -6,6 +6,9 @@ ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
 SAVE = ROOT / "save_data"
 
+# Ensure save_data directory exists
+SAVE.mkdir(parents=True, exist_ok=True)
+
 # Save data
 INVENTORY_SAVE = SAVE / "inventory.json"
 UPGRADES_SAVE = SAVE / "owned_upgrades.json"

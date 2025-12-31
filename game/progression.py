@@ -1,5 +1,40 @@
 from json import load, dump
 
+# === Helper function to deal with drop changes with upgrades === 
+def update_drops(object):
+    """
+    Loops through an objects upgrades and unlocks any purchased drops.
+
+    Parameters:
+        object (object): A valid object containing drops
+
+    Returns:
+        None
+    """
+    # Loop through each upgrade an object has
+    for upgrade in object.upgrades.values():
+        # New Drops 
+        if upgrade["new_drops"] and upgrade["owned"]:
+            # Loop through each new drop and set its status to unlocked
+            for drop in upgrade["new_drops"]:
+                object.drops[drop]["unlocked"] = True
+
+        # Drop Modifiers
+        if upgrade["drop_modifier"] and upgrade["owned"]:
+            for drop, multiplier in upgrade["drop_modifier"].items():
+                # Multiply each drop by the required modifier
+                object.drops[drop]["weight"] = object.drops[drop]["weight"] * multiplier
+
+        # Rarity Modifiers
+        if upgrade["rarity_modifier"]:
+            # NEEDS TO BE DONE
+            pass
+
+        # Cooldown Modifier
+        if upgrade["cooldown_modifier"] != "none":
+            # NEEDS TO BE DONE
+            pass
+
 def buy_upgrade(object, upgrade_id, inventory, item_list, upgrades_save):
     """ 
     Applies an upgrade and deducts funds or items required to purchase it from
@@ -36,13 +71,15 @@ def buy_upgrade(object, upgrade_id, inventory, item_list, upgrades_save):
     for item, amount in object.upgrades[upgrade_id]["cost"].items():
         inventory.remove_item(item_list[item], amount)
 
+    # Handle any drop changes due to the upgrade
+    update_drops(object)
 
-def apply_upgrades(registry, upgrades_data, upgrades_save):
+def load_upgrades(registry, upgrades_data, upgrades_save):
     """
-    Applies upgrades to each item in a registry corresponding to an upgrades
-    file. Determines if an upgrade is owned or still locked, and applies a
-    boolean value accordingly. Can be used to update existing upgrades
-    when an upgrade is purchased, or to load in upgrades on initial launch.
+    Applies upgrade ownership states to each object in a given registry 
+    from a JSON file. Determines if an upgrade is owned or still locked 
+    using save data and applies a boolean value accordingly. Main use  
+    is to load upgrades on initial launch.
 
     Parameters:
         registry(dict): A valid registry mapping ID's to objects
@@ -88,3 +125,4 @@ def apply_upgrades(registry, upgrades_data, upgrades_save):
 
         # Update the object's upgrades.
         object.upgrades = upgrades
+        update_drops(object)
