@@ -1,13 +1,17 @@
 from random import random
-from ui.colors import UI_COLORS as uic
 
 class Mineshaft:
-    def __init__(self, id, name, color, drops, upgrades):
+    """
+    A class representing a mineshaft that can be mined for resources using the
+    built-in mine() function.
+    """
+    def __init__(self, id, name, color, drops, upgrades, cooldown):
         self.id = id
         self.name = name
         self.color = color
         self.drops = drops
         self.upgrades = upgrades
+        self.cooldown = cooldown
 
     def mine(self, inventory, item_list, loot_table):
         """

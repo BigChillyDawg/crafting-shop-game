@@ -27,6 +27,13 @@
         "stackable": true,
         "traits": ["hard", "mineral"]
     },
+    "gold_ingot": {
+        "name": "Gold Ingot",
+        "category": "Mining",
+        "rarity": "epic",
+        "stackable": true,
+        "traits": ["hard", "mineral", "valuable"]
+    },
     "fire_essence": {
         "name": "Fire Essence",
         "category": "Essence",

@@ -1,6 +1,11 @@
 from random import random
 
 class Recipe:
+    """
+    A class representing a crafting recipe with ingredients, chance, and
+    output amount. Built in methods allow for checking if a recipe can be
+    crafted based off current inventory and performing the crafting action.
+    """
     def __init__(self, id, ingredients, chance, output):
         self.id = id
         self.ingredients = ingredients

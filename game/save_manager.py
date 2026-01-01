@@ -5,6 +5,33 @@ from game.mineshaft import Mineshaft
 from game.recipe import Recipe
 from game.rarity import Rarity
 from game.item import Item
+from game.cooldown import Cooldown
+
+# ===== Game State Functions =====
+
+def load_cooldowns(filepath, registry):
+    """
+    Loads saved cooldown data from a JSON file and applies it to the given
+    registry.
+
+    Parameters:
+        filepath (object): A valid Path() object to a JSON file containing
+                           cooldown data.
+        registry (dict): A dictionary mapping ID's to objects.
+    
+    Returns:
+        None
+    """
+    # Load saved cooldowns if they exist
+    if filepath.exists():
+        with filepath.open('r') as f:
+            cooldown_json = json.load(f)
+    else:
+        cooldown_json = {}
+
+    # Update last used for each mineshaft with a saved cooldown
+    for id, last_time in cooldown_json:
+        registry[id].cooldown.last_used = last_time
 
 #  ===== Inventory Functions =====
 def load_inventory(inventory, item_list, filepath):
@@ -60,7 +87,7 @@ def save_inventory(inventory, filepath):
         json.dump(id_inventory, f)
 
 # ===== Mineshaft Functions =====
-def load_mineshafts(filepath):
+def load_mineshafts(mineshaft_data, cooldown_save):
     """ 
     Loads recipes from a JSON data file into a dictionary containing ID's
     as keys and mineshaft objects as values. Creates Mineshaft() objects
@@ -68,23 +95,32 @@ def load_mineshafts(filepath):
     upgrades to each mineshaft using apply_upgrades().
     
     Parameters:
-        filepath (object): A valid Path() object to a JSON file containing
-                           mineshaft data.
-    
+        mineshaft_data (object): A valid Path() object to a JSON file
+                                 containing mineshaft data.
+        cooldown_save (object): A valid Path() object to a JSON file
+                                containing saved cooldowns
+        
     Returns:
         (dict): A dictionary containing id's as keys and mineshaft objects
                 as values.
     """
 
     # Open the mineshaft data file and return parse it into a dictionary
-    with filepath.open("r") as f:
+    with mineshaft_data.open("r") as f:
         mineshaft_json = json.load(f)
 
     # Converts mineshaft data into valid Mineshaft() objects.
     # Stores ID's as keys and mineshaft objects as values.
     mineshaft_registry = {}
     for id, mineshaft in mineshaft_json.items():
-        mineshaft_registry[id] = Mineshaft(id, mineshaft["name"], mineshaft["color"], mineshaft["drops"], upgrades={})
+        mineshaft_registry[id] = Mineshaft(id=id,
+                                           name=mineshaft["name"],
+                                           color=mineshaft["color"],
+                                           drops=mineshaft["drops"],
+                                           upgrades={}, 
+                                           cooldown=Cooldown(mineshaft["cooldown"]))
+
+    load_cooldowns(cooldown_save, mineshaft_registry)
 
     return mineshaft_registry
 
@@ -151,5 +187,5 @@ def load_items(filepath):
 
     return item_registry
 
-# ===== Game State Functions =====
+
 

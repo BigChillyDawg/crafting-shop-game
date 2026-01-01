@@ -12,6 +12,7 @@ SAVE.mkdir(parents=True, exist_ok=True)
 # Save data
 INVENTORY_SAVE = SAVE / "inventory.json"
 UPGRADES_SAVE = SAVE / "owned_upgrades.json"
+COOLDOWN_SAVE = SAVE / "saved_cooldowns.json"
 
 # Game data
 ITEM_FILE = DATA / "items.json"

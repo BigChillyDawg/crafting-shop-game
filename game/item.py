@@ -3,8 +3,12 @@
 import json
 from game.rarity import Rarity
 
-# Item class, holds a name and other traits for ease of use across numerous games.
 class Item:
+    """
+    A class representing an item in the game. Each item has an ID, name,
+    category, rarity, stackability, and traits. Integrates with the inventory,
+    mineshaft, and other game based systems.
+    """
     def __init__(self, id, name, category, rarity, stackable, traits):
         self.id = id
         self.name = name

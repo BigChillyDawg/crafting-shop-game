@@ -2,11 +2,14 @@
 import time
 from ui.screens import travelling_screen, invalid_input_screen, clear_screen
 from ui.colors import UI_COLORS as uic
+from ui.format import mins_seconds
 from game.progression import buy_upgrade
 import json
 
+
 # ===== Mining Menus =====
-def mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, upgrades_save):
+
+def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
     """
     Displays an individual mineshafts menu. Displaying features such as its
     upgrades, cooldown and drop rates.
@@ -24,13 +27,13 @@ def mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, u
     """
     while True:
         divider_length = 40
-        cooldown = "Ready"
+        cooldown = mineshaft.cooldown
         # ===== Title =====
         print()
         print(f"{uic['bold']}{uic[mineshaft.color]}===== {mineshaft.name.upper()} ===== {uic['reset']}")
         print()
         # ===== Cooldown =====
-        print(f"Cooldown: {cooldown}")
+        print(f"Cooldown: {mins_seconds(cooldown.remaining())}")
         print()
         # ====== DROPS =====
         print("-" * divider_length)
@@ -115,19 +118,24 @@ def mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, u
 
         # ===== Mine =====
         if user_input == '1':
-            print(f"Mining", end="", flush=True)
-            for i in range(3):
-                time.sleep(0.33)
-                print(".", end="", flush=True)
-            print()
+            if cooldown.trigger():
+                print(f"Mining", end="", flush=True)
+                for i in range(3):
+                    time.sleep(0.33)
+                    print(".", end="", flush=True)
+                print()
 
-            # Complete the mine() action and store the result
-            result = mineshaft.mine(inventory, item_list, loot_table)
-            for item, amount in result.items():
-                print(f"You recieved {item.rarity.color}{item.name}{uic['reset']} x{amount}")
-                print(("=" * 40), flush=True)
-                time.sleep(0.75)
-            continue
+                # Complete the mine() action and store the result
+                result = mineshaft.mine(inventory, item_list, loot_table)
+                for item, amount in result.items():
+                    print(f"You recieved {item.rarity.color}{item.name}{uic['reset']} x{amount}")
+                    print(("=" * 40), flush=True)
+                    time.sleep(0.75)
+                cooldown.reset()
+                continue
+            else:
+                print("Not ready yet.")
+                continue
 
         # ===== Buy Upgrades =====
         if user_input == '2':
@@ -214,7 +222,7 @@ def mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, u
                     time.sleep(0.07)
                 clear_screen()
 
-def mining_menu(inventory, mineshafts, item_list, upgrades_data, upgrades_save):
+def mining_menu(inventory, mineshafts, item_list, upgrades_save):
     """
     Displays mining menu to the user. Determines the shaft the user would
     like to mine in and processes any actions they'd like to take.
@@ -271,7 +279,7 @@ def mining_menu(inventory, mineshafts, item_list, upgrades_data, upgrades_save):
         
         # Display mineshaft menu
 
-        mineshaft_menu(mineshaft, mineshafts, inventory, item_list, upgrades_data, upgrades_save)
+        mineshaft_menu(mineshaft, inventory, item_list, upgrades_save)
 
 # ===== Crafting Menus =====
 def crafting_menu(inventory, recipes, item_list):

@@ -1,5 +1,10 @@
 # inventory.py
 class Inventory:
+    """ A class representing an inventory system for storing items.
+        Items are stored in a dictionary with item objects as keys
+        and their quantities as values. Items can be removed or added
+        using built-in methods.
+    """
     def __init__(self):
         self.items = {}
 

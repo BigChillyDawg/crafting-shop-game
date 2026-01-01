@@ -23,7 +23,8 @@
                 "amount": 1,
                 "unlocked": false
             }
-        }
+        },
+        "cooldown": 60
     }
 }
 

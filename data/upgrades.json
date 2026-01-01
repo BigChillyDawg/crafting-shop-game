@@ -6,7 +6,7 @@
             "features": "Doubles iron ore chance",
             "requires" : [],
             "cost": {
-                "iron_ingot": 2
+                "iron_ingot": 1
             },
             "new_drops": {},
             "drop_modifier": {
@@ -25,6 +25,21 @@
             },
             "new_drops": ["gold_ore"],
             "drop_modifier": {},
+            "rarity_modifier": {},
+            "cooldown_modifier": "none"
+        },
+        "gold_rush_1": {
+            "label": "Gold Rush I",
+            "description": "Gold, gold, gold! That's all that matters in the end.",
+            "features": "Quadruples gold ore chance.",
+            "requires" : ["iron_supports", "prospecting_1"],
+            "cost": {
+                "gold_ingot": 2
+            },
+            "new_drops": {},
+            "drop_modifier": {
+                "gold_ore": 4
+            },
             "rarity_modifier": {},
             "cooldown_modifier": "none"
         }
