@@ -9,10 +9,14 @@ SAVE = ROOT / "save_data"
 # Ensure save_data directory exists
 SAVE.mkdir(parents=True, exist_ok=True)
 
+# Cooldown directory
+COOLDOWN_SAVE = SAVE / "cooldown_save"
+COOLDOWN_SAVE.mkdir(parents=True, exist_ok=True)
+
 # Save data
 INVENTORY_SAVE = SAVE / "inventory.json"
 UPGRADES_SAVE = SAVE / "owned_upgrades.json"
-COOLDOWN_SAVE = SAVE / "saved_cooldowns.json"
+MINESHAFT_COOLDOWNS = COOLDOWN_SAVE / "saved_cooldowns.json"
 
 # Game data
 ITEM_FILE = DATA / "items.json"

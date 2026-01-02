@@ -1,11 +1,46 @@
 # menus.py
 import time
-from ui.screens import travelling_screen, invalid_input_screen, clear_screen
+import msvcrt
+from ui.screens import travelling_screen, clear_screen, check_terminal_size, display_inventory
 from ui.colors import UI_COLORS as uic
 from ui.format import mins_seconds
 from game.progression import buy_upgrade
 import json
 
+HIDE_CURSOR = "\033[?25l"
+SHOW_CURSOR = "\033[?25h"
+TOP_LEFT_CURSOR = "\033[H"
+
+# === SELECTIONS ===
+def recieve_menu_key(locked=False):
+    """ Reads keyboard input and returns a matching menu action """
+
+    # Check if a key was pressed
+    if not msvcrt.kbhit() and locked == False:
+        return None
+
+    # Recieve a key from the user
+    key = msvcrt.getch()
+
+    # ARROW KEYS
+    if key == b'\xe0':
+        key = msvcrt.getch()
+        return {
+            b'H': 'UP',
+            b'P': 'DOWN',
+            b'K': 'RIGHT',
+            b'M': 'LEFT',
+        }.get(key)
+
+    # NORMAL KEYS
+    key = key.lower()
+    return {
+        b'w': 'UP',
+        b's': 'DOWN',
+        b'a': 'LEFT',
+        b'd': 'RIGHT',
+        b'\r': 'SELECT' # ENTER
+    }.get(key)
 
 # ===== Mining Menus =====
 
@@ -25,202 +60,265 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
     Returns:
         None
     """
+    selected = 0
+    last_draw = 0
     while True:
+        check_terminal_size(40)
+        print(TOP_LEFT_CURSOR, end="")
         divider_length = 40
         cooldown = mineshaft.cooldown
-        # ===== Title =====
-        print()
-        print(f"{uic['bold']}{uic[mineshaft.color]}===== {mineshaft.name.upper()} ===== {uic['reset']}")
-        print()
-        # ===== Cooldown =====
-        print(f"Cooldown: {mins_seconds(cooldown.remaining())}")
-        print()
-        # ====== DROPS =====
-        print("-" * divider_length)
-        print("DROPS")
-        print("-" * divider_length)
 
-        # Sum total drop weights, create a loot table using weightings
-        loot_table = {}
-        total_weight = 0
-        for drop, value in mineshaft.drops.items():
-            if value["unlocked"] == True:
-                total_weight += value["weight"]
-                loot_table[drop] = total_weight
-
-        # Display drops and drop rates from the loot table, sorted by rarity
-        for drop in sorted(loot_table, key=lambda d: mineshaft.drops[d]['weight'], reverse=True):
-            item = item_list[drop]
-            print(f"{item.rarity.color}{item.name:<20}{uic['reset']}{(mineshaft.drops[drop]['weight'] / total_weight * 100):.2f}%")
-        print("\n")
-
-        # ===== UPGRADES =====
-        print("-" * divider_length)
-        print("UPGRADES")
-        print("-" * divider_length)
-
-        # Owned upgrades
-        if upgrades_save.exists():
-            with upgrades_save.open('r') as f:
-                owned_upgrades = json.load(f)['owned']
-        else:
-            owned_upgrades = []
-
-        check = chr(10003)
-        # Display owned upgrades to the user
-        for id, upgrade in mineshaft.upgrades.items():
-            if id in owned_upgrades:
-                print(f"[{uic['neon_green']}{check}{uic['reset']}] {uic['bold']}{upgrade['label']}{uic['reset']}")
-                print(f"    {uic['grey']}{chr(8226)}{uic['italic']}{upgrade['description']}{uic['reset']}")
-                print(f"    {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
-                print()
-
-        # Display available upgrades to the user, ensure none are locked
-        for id, upgrade in mineshaft.upgrades.items():
-            # Check if the requirements for the upgrade are met
-            locked = False
-            for requirement in upgrade['requires']:
-                if requirement not in owned_upgrades:
-                    locked = True
-                    break
-            # If requirements aren't met, move onto the next upgrade
-            if locked == True:
-                continue
-            if id not in owned_upgrades:
-                print(f"[] {uic['bold']}{upgrade['label']}{uic['reset']}")
-                print(f"    {chr(8226)} {uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
-                print(f"    {chr(8226)} {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
-                print(f"    {chr(8226)} {uic['off_white']}Cost:{uic['reset']}")
-                for item, amount in upgrade['cost'].items():
-                    print(" " * 6, end="")
-                    print(f"{uic['pink']}- {uic['reset']}", end="")
-                    print(f"{uic['off_white']}{item_list[item].name}{uic['reset']} {amount}x")
-                    print()
-        
         # ===== Actions =====
-        print()
-        print("1) Mine")
-        print("2) Purchase Upgrades")
-        print("0) Return to Mining Menu")
-        user_input = input(">> ")
-        
-        # Handle invalid inputs
-        if user_input not in ['0', '1', '2']:
-            invalid_input_screen()
-            clear_screen()
-            continue
-        
-        # Return to mining menu
-        if user_input == '0':
-            clear_screen()
-            travelling_screen("The Mine", uic['warm_brown'])
-            break
+        selections = [
+            "Mine",
+            "Purchase Upgrades",
+            "Return to Mining Menu"
+        ]
 
-        # ===== Mine =====
-        if user_input == '1':
-            if cooldown.trigger():
-                print(f"Mining", end="", flush=True)
-                for i in range(3):
-                    time.sleep(0.33)
-                    print(".", end="", flush=True)
-                print()
+        # Check if user has made an input, map it if so
+        key = recieve_menu_key()
+        option = None
+        if key == 'UP':
+            selected -= 1
+        elif key == "DOWN":
+            selected += 1
+        elif key in ("SELECT", "LEFT", "RIGHT"):
+            # Map user selection
+            option = selections[selected]
 
-                # Complete the mine() action and store the result
-                result = mineshaft.mine(inventory, item_list, loot_table)
-                for item, amount in result.items():
-                    print(f"You recieved {item.rarity.color}{item.name}{uic['reset']} x{amount}")
-                    print(("=" * 40), flush=True)
-                    time.sleep(0.75)
-                cooldown.reset()
-                continue
+        # Display menu on key press or every 0.25 seconds
+        if key or last_draw + 0.25 <= time.time():
+            # ===== Title =====
+            print(f"{uic['bold']}{uic[mineshaft.color]}===== {mineshaft.name.upper()} ===== {uic['reset']}")
+            print()
+            # ===== Cooldown =====
+            if cooldown.remaining() <= 0:
+                print(f"{uic['off_white']}Cooldown: (Ready){uic['reset']}")
             else:
-                print("Not ready yet.")
-                continue
+                print(f"{uic['off_white']}Cooldown: ({mins_seconds(cooldown.remaining())}){uic['reset']}")
+            print()
+            # ====== DROPS =====
+            print("-" * divider_length)
+            print("DROPS")
+            print("-" * divider_length)
 
-        # ===== Buy Upgrades =====
-        if user_input == '2':
-            while True:
-                print()
-                print(f"{uic['bold']}{uic['orange']}===== Available Upgrades ===== {uic['reset']}")
-                # Display available upgrades and their cost, along with an index 
-                index_map = {}
-                i = 0
-                for id, upgrade in mineshaft.upgrades.items():
-                    # Check if the requirements for the upgrade are met
-                    locked = False
-                    for requirement in upgrade['requires']:
-                        if requirement not in owned_upgrades:
-                            locked = True
-                            break
-                    # If requirements aren't met, move onto the next upgrade
-                    if locked == True:
-                        continue
-                    # If user doesn't already own the upgrade, add it to the list
-                    if id not in owned_upgrades:
-                        i += 1
-                        index_map[str(i)] = id
-                        index = f"{i})".ljust(4)
-                        print(f"{index}{uic['bold']}{upgrade['label']}{uic['reset']}")
-                        print(f"    {chr(8226)}{uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
-                        print(f"    {chr(8226)}{uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
-                        print(f"    {chr(8226)}Cost:")
-                        for item, amount in upgrade['cost'].items():
-                            print(" " * 6, end="")
-                            print(f"{uic['pink']}- {uic['reset']}", end="")
-                            print(f"{uic['off_white']}{item_list[item].name}{uic['reset']} {amount}x")
-                            print()
-                print("0) Return to Mineshaft")
-                print()
+            # Sum total drop weights, create a loot table using weightings
+            loot_table = {}
+            total_weight = 0
+            for drop, value in mineshaft.drops.items():
+                if value["unlocked"] == True:
+                    total_weight += value["weight"]
+                    loot_table[drop] = total_weight
 
-                # ===== Upgrade Actions =====
+            # Display drops and drop rates from the loot table, sorted by rarity
+            for drop in sorted(loot_table, key=lambda d: mineshaft.drops[d]['weight'], reverse=True):
+                item = item_list[drop]
+                print(f"{item.rarity.color}{item.name:<20}{uic['reset']}{(mineshaft.drops[drop]['weight'] / total_weight * 100):.2f}%")
+            print("\n")
 
-                
-                print("Enter the number of the upgrade you wish to purchase")
-                upgrade_choice = input(">> ")
+            # ===== UPGRADES =====
+            print("-" * divider_length)
+            print("UPGRADES")
+            print("-" * divider_length)
 
-                # Return to Mineshaft menu when specified
-                if upgrade_choice == '0':
-                    break
+            # Owned upgrades
+            if upgrades_save.exists():
+                with upgrades_save.open('r') as f:
+                    owned_upgrades = json.load(f)['owned']
+            else:
+                owned_upgrades = []
 
-                # Handle invalid inputs
-                if upgrade_choice not in index_map:
-                    invalid_input_screen()
-                    continue
+            check = chr(10003)
+            # Display owned upgrades to the user
+            for id, upgrade in mineshaft.upgrades.items():
+                if id in owned_upgrades:
+                    print(f"[{uic['neon_green']}{check}{uic['reset']}] {uic['bold']}{upgrade['label']}{uic['reset']}")
+                    print(f"    {uic['grey']}{chr(8226)}{uic['italic']}{upgrade['description']}{uic['reset']}")
+                    print(f"    {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
+                    print()
 
-                # Attempt to buy upgrade user specified
-                upgrade_id = index_map[upgrade_choice]
-                upgrade_cost = mineshaft.upgrades[upgrade_id]['cost']
-
-                # Compare user inventory to each item to check affordability.
-                affordable = True
-                for id, amount in upgrade_cost.items():
-                    if (item_list[id] in inventory.items and inventory.items[item_list[id]] < amount) \
-                        or item_list[id] not in inventory.items:
-                        # If user didn't have enough of a required item
-                        # let them know and flag affordability
-                        print()
-                        message = "You don't have enough items!"
-                        for char in message:
-                            print(f"{uic['italic']}{uic['off_white']}{char}{uic['reset']}", end="", flush=True)
-                            time.sleep(0.07)
-                        print()
-                        affordable = False
+            # Display available upgrades to the user, ensure none are locked
+            for id, upgrade in mineshaft.upgrades.items():
+                # Check if the requirements for the upgrade are met
+                locked = False
+                for requirement in upgrade['requires']:
+                    if requirement not in owned_upgrades:
+                        locked = True
                         break
+                # If requirements aren't met, move onto the next upgrade
+                if locked == True:
+                    continue
+                if id not in owned_upgrades:
+                    print(f"[] {uic['bold']}{upgrade['label']}{uic['reset']}")
+                    print(f"    {chr(8226)} {uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
+                    print(f"    {chr(8226)} {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
+                    print(f"    {chr(8226)} {uic['off_white']}Cost:{uic['reset']}")
+                    for item, amount in upgrade['cost'].items():
+                        print(" " * 6, end="")
+                        print(f"{uic['pink']}- {uic['reset']}", end="")
+                        print(f"{uic['off_white']}{item_list[item].name}{uic['reset']} {amount}x")
+                        print()
+            
+            
+            # Display all options based on selection
+            for i, selection in enumerate(selections):
+                # Format the user's current selection
+                if i == selected:
+                    prefix = f">".ljust(4)
+                else:
+                    prefix = "".ljust(4)
+                
+                print(f"{uic['pink']}{prefix}{uic['reset']}{uic['off_white']}"
+                    f"{selection}{uic['reset']}")
 
-                # Check if user had all required items.
-                if affordable == False:
+            # Ensure selection stays in range
+            selected = max(0, min(selected, (len(selections) - 1)))
+            
+            # Return to mining menu
+            if option == 'Return to Mining Menu':
+                travelling_screen("The Mine", uic['warm_brown'])
+                break
+
+            # ===== Mine =====
+            elif option == 'Mine':
+                if cooldown.trigger():
+                    clear_screen()
+                    print(f"{uic['off_white']}Mining{uic['reset']}", end="", flush=True)
+                    for i in range(3):
+                        time.sleep(0.33)
+                        print(f"{uic['off_white']}.{uic['reset']}", end="", flush=True)
+
+                    # Complete the mine() action and store the result
+                    result = mineshaft.mine(inventory, item_list, loot_table)
+                    for item, amount in result.items():
+                        print(f"You recieved {item.rarity.color}{item.name}{uic['reset']} x{amount}")
+                        print(("=" * 40), flush=True)
+                        time.sleep(1)
+                    clear_screen()
+                    continue
+                else:
+                    clear_screen()
+                    message = "Cooldown is not ready."
+                    for char in message:
+                        print(f"{uic['italic']}{uic['grey']}{char}{uic['reset']}")
+                    clear_screen()
                     continue
 
-                # If user has all the required items, complete purchase.
-                owned_upgrades.append(upgrade_id)
-                buy_upgrade(mineshaft, upgrade_id, inventory, item_list, upgrades_save)
-                # Display sucessful purchase message
-                upgrade_name = mineshaft.upgrades[upgrade_id]['label']
-                message = f"You have sucessfully purchased {upgrade_name}!"
-                for char in message:
-                    print(f"{uic['bold']}{uic['neon_green']}{char}{uic['reset']}", end="", flush=True)
-                    time.sleep(0.07)
+            # ===== Buy Upgrades =====
+            elif option == 'Purchase Upgrades':
                 clear_screen()
+                upgrade_selected = 0
+                while True:
+                    print(TOP_LEFT_CURSOR, end='')
+                    print()
+                    print(f"{uic['bold']}{uic['orange']}===== Available Upgrades ===== {uic['reset']}")
+                    
+                    # Determine available selections
+                    upgrade_selections = []
+                    for id, upgrade in mineshaft.upgrades.items():
+                        # Check if the requirements for the upgrade are met
+                        locked = False
+                        for requirement in upgrade['requires']:
+                            if requirement not in owned_upgrades:
+                                locked = True
+                                break
+                        # If requirements aren't met, move onto the next upgrade
+                        if locked == True:
+                            continue
+                        # If user doesn't already own the upgrade, add it to the list
+                        if id not in owned_upgrades:
+                            upgrade_selections.append((id, upgrade))
+                    
+                    # Add the exit option
+                    upgrade_selections.append(0)
+                    
+                    # Print each option with an arrow beside the current selection
+                    for i, selection in enumerate(upgrade_selections):
+                        # Format the user's current selection
+                        if i == upgrade_selected:
+                            prefix = f">".ljust(4)
+                        else:
+                            prefix = "".ljust(4)
+
+                        if selection != 0:
+                            # Print upgrade name, description and features
+                            upgrade = selection[1]
+                            print(f"{uic['pink']}{prefix}{uic['reset']}{uic['bold']}"
+                                f"{upgrade['label']}{uic['reset']}")
+                            print(f"    {chr(8226)}{uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
+                            print(f"    {chr(8226)}{uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
+                            # Display formatted upgrade cost
+                            print(f"    {chr(8226)}Cost:")
+                            for item, amount in upgrade['cost'].items():
+                                print(" " * 6, end="")
+                                print(f"{uic['pink']}- {uic['reset']}", end="")
+                                print(f"{item_list[item].rarity.color}"
+                                    f"{item_list[item].name}{uic['reset']} "
+                                    f"{amount}x")
+                            print()
+                        
+                        else:
+                            print(f"{uic['bold']}{prefix}Return to "
+                                f"{uic[mineshaft.color]}{mineshaft.name}"
+                                f"{uic['reset']}")
+                            print()
+
+                    # Recieve an input from a user
+                    key = recieve_menu_key(locked=True)
+
+                    # Map user input
+                    if key == 'UP':
+                        upgrade_selected -= 1
+                        continue
+                    elif key == "DOWN":
+                        upgrade_selected += 1
+                        continue
+                    # If user chose to select, map their selection
+                    elif key in ("SELECT", "LEFT", "RIGHT"):
+                        upgrade_selection = upgrade_selections[upgrade_selected]
+                        
+                        # Return to the mine when user specifies
+                        if upgrade_selection == 0:
+                            clear_screen()
+                            break
+                        
+                        # Attempt to buy upgrade user specified
+                        upgrade_id = upgrade_selection[0]
+                        upgrade_cost = mineshaft.upgrades[upgrade_id]['cost']
+
+                        # Compare user inventory to each item to check affordability.
+                        affordable = True
+                        for id, amount in upgrade_cost.items():
+                            if (item_list[id] in inventory.items and inventory.items[item_list[id]] < amount) \
+                                or item_list[id] not in inventory.items:
+                                # If user didn't have enough of a required item
+                                # let them know and flag affordability
+                                clear_screen()
+                                message = "You don't have enough items!"
+                                for char in message:
+                                    print(f"{uic['italic']}{uic['off_white']}{char}{uic['reset']}", end="", flush=True)
+                                    time.sleep(0.07)
+                                clear_screen()
+                                affordable = False
+                                break
+
+                        # Check if user had all required items.
+                        if affordable == False:
+                            continue
+
+                        # If user has all the required items, complete purchase.
+                        owned_upgrades.append(upgrade_id)
+                        buy_upgrade(mineshaft, upgrade_id, inventory, item_list, upgrades_save)
+                        # Display sucessful purchase message
+                        clear_screen()
+                        upgrade_name = mineshaft.upgrades[upgrade_id]['label']
+                        message = f"You have sucessfully purchased {upgrade_name}!"
+                        for char in message:
+                            print(f"{uic['bold']}{uic['neon_green']}{char}{uic['reset']}", end="", flush=True)
+                            time.sleep(0.07)
+                        clear_screen()
+                    # Ensure selection stays in range
+                    upgrade_selected = max(0, min(upgrade_selected, (len(upgrade_selections) - 1)))
 
 def mining_menu(inventory, mineshafts, item_list, upgrades_save):
     """
@@ -235,51 +333,91 @@ def mining_menu(inventory, mineshafts, item_list, upgrades_save):
     Returns:
         None
     """
+
+    # Display the travelling animation
+    travelling_screen("The Mine", uic['warm_brown'])
+
+    # Hide the cursor
+    print(HIDE_CURSOR, end="")
+    # Initialize user selection
+    selected = 0
+    last_draw = 0
     while True:
-        index_map = {}
-        print(f"\n{uic['bold']}{uic['warm_brown']}=== MINING ==={uic['reset']}\n")
+        check_terminal_size(20)
+        # Move cursor to top left
+        print(TOP_LEFT_CURSOR, end="")
+        # Check if the user pressed a key and recieve it if so
+        key = recieve_menu_key()
 
-        # Display formatted mineshafts to the user
-        for i, mineshaft in enumerate(mineshafts.values(), start=1):
-            # Format the index and spacing that comes before each mineshaft
-            index = f"{i})".ljust(4)
-
-            # Match indexes to mineshafts and store them in index_map
-            index_map[str(i)] = mineshaft
-
-            # Display formatted mineshaft name
-            color = uic[mineshaft.color]
-            print(f"{uic['bold']}{index}{color}{mineshaft.name}{uic['reset']}")
-            print()
-    
-        # Display exit option
-        final_index = f"0)".ljust(4)
-        print(f"{uic['bold']}{final_index}Exit{uic['reset']}")
-        print()
-
-        # Recieve valid input from user
-        print(f"Enter the {uic['bold']}number{uic['reset']} of the shaft" 
-              f" you wish to {uic['bold']}travel to!{uic['reset']}")
-        user_input = input(">> ")
-
-        # Leave mining area when user chooses to exit
-        if user_input.lower() == '0':
-            break
-
-        # Handle invalid inputs
-        if user_input not in index_map:
-            print("Invalid input! Please try again")
-            continue
-
-        # Map the selected index to a Mineshaft() object
-        mineshaft = index_map[user_input]
-
-        # Display travelling animation
-        travelling_screen(mineshaft.name, uic[mineshaft.color])
+        # Establish available selections for the user
+        selections = []
+        for mineshaft in mineshafts.values():
+            selections.append(mineshaft)
         
-        # Display mineshaft menu
+        # Add the exit option
+        selections.append(0)
 
-        mineshaft_menu(mineshaft, inventory, item_list, upgrades_save)
+        # Map user input
+        if key == 'UP':
+            selected -= 1
+        elif key == "DOWN":
+            selected += 1
+        # If user chose to select, map their selection
+        elif key in ("SELECT", "LEFT", "RIGHT"):
+            # Map user selection
+            mineshaft = selections[selected]
+
+            # Leave mining area if user chose to exit
+            if mineshaft == 0:
+                travelling_screen("The Workshop", uic["arcane_purple"])
+                break
+
+            # Display travelling animation
+            travelling_screen(mineshaft.name, uic[mineshaft.color])
+
+            # Display mineshaft menu
+            mineshaft_menu(mineshaft, inventory, item_list, upgrades_save)
+
+        # Ensure selection stays in range
+        selected = max(0, min(selected, (len(selections) - 1)))
+
+        # Display menu on key press or every 0.25 seconds
+        if key or last_draw + 0.25 <= time.time():
+            print(f"\n{uic['bold']}{uic['warm_brown']}=== MINING ==={uic['reset']}\n")
+
+            # Display all options based on selection
+            for i, selection in enumerate(selections):
+                # Format the user's current selection
+                if i == selected:
+                    prefix = f">".ljust(4)
+                else:
+                    prefix = "".ljust(4)
+
+                # If selection is not the exit option, display formatted name
+                if selection != 0:
+                    color = uic[selection.color]
+                    # Establish remaining cooldown
+                    if selection.cooldown.remaining() > 0:
+                        remaining_cooldown = mins_seconds(selection.cooldown.remaining())
+                    else:
+                        remaining_cooldown = "Ready"
+                    
+                    # Display mineshaft name
+                    print(f"{uic['pink']}{prefix}{uic['reset']}{uic['bold']}{color}"
+                        f"{selection.name:<20}{uic['reset']}({uic['off_white']}"
+                        f"{remaining_cooldown}{uic['reset']})")
+                    print()
+                # Display exit option when necessary 
+                else:
+                    print(f"{uic['pink']}{prefix}{uic['reset']}{uic['bold']}"
+                        f"{uic['off_white']}Exit{uic['reset']}")
+                    print()
+            # Reset the timer
+            last_draw = time.time()
+    # Make the cursor visible again
+    print(SHOW_CURSOR, end="")
+    return
+    
 
 # ===== Crafting Menus =====
 def crafting_menu(inventory, recipes, item_list):
@@ -296,88 +434,161 @@ def crafting_menu(inventory, recipes, item_list):
         (Recipe): Recipe() object that the user would like to craft
     """
 
+    clear_screen()
+    print(HIDE_CURSOR, end="")
     # Display crafting menu and recieve valid input from the user
-    NAME_WIDTH = 20  # controls alignment
+    NAME_WIDTH = 20
+    selected = 0
+    last_draw = 0
     while True:
         # Initialize placeholders for craftable items and their indexes
         craftables = []
-        index_map = {}
         # Loop through the users inventory to determine what they can craft
         for id, recipe in recipes.items():
             if recipe.can_craft(inventory):
                 craftables.append(id)
         
-        print(f"\n{uic['bold']}{uic['orange']}=== AVAILABLE RECIPES ==={uic['reset']}\n")
+        # Add the exit option
+        craftables.append(0)
 
-        # Display formatted recipes and ingredients to the user
-        for i, recipe in enumerate(craftables, start=1):
-            # Format the index and spacing that comes before each recipe
-            index = f"{i})".ljust(4)
+        # Check for an input from the user
+        key = recieve_menu_key()
+        if key == 'UP':
+            selected -= 1
+        elif key == "DOWN":
+            selected += 1
+        elif key in ("SELECT", "LEFT", "RIGHT"):
+            # If user chose to exit, return
+            if craftables[selected] == 0:
+                travelling_screen("The Workshop", uic["arcane_purple"])
+                break
 
-            # Match indexes to recipe objects and store them in index_map
-            index_map[str(i)] = recipes[recipe]
+            # Craft the user's desired recipe.
+            recipe_final = recipes[craftables[selected]]
+            success = recipe_final.craft(inventory, item_list, recipe_final.id)
 
-            # Display recipe name and success rate
-            recipe_color = item_list[recipe].rarity.color
-            print(f"{uic['bold']}{index}{recipe_color}{item_list[recipe].name} {uic['reset']}"
-                  f"({recipes[recipe].chance}% success rate)"
-                  )
+            # Display the crafting animation. Let the user know if crafting succeeded or failed.
+            clear_screen()
+            print("Crafting", end="", flush=True)
+            for i in range(3):
+                time.sleep(0.5)
+                print(".", end="", flush=True)
+            if success:
+                print(f"{uic['green']} success!{uic['reset']}", flush=True)
+                time.sleep(0.5)
+                item_name = item_list[recipe_final.id].name
+                item_color = item_list[recipe_final.id].rarity.color
+                print(f"{recipe_final.output}x {item_color}{item_name}{uic['reset']} has been added to your inventory", flush=True)
+            else:
+                print(f"{uic['red']} failed.{uic['reset']}", flush=True)
+                time.sleep(0.5)
+                print(f"{uic['italic']}{uic['grey']}Ingredients have been lost!"
+                      f"{uic['reset']}", flush=True)
 
-            # Display individual ingredients and amounts
-            for ingredient, amount in recipes[recipe].ingredients.items():
-                ing_color = item_list[ingredient].rarity.color
-                print(f"    {uic['pink']}-{uic['reset']} {ing_color}"
-                      f"{item_list[ingredient].name:<{NAME_WIDTH}}{uic['reset']} x{amount}"
-                      )
-            print()
-
-        # Handle cases where no recipes are available
-        if not craftables:
-            print(f"{uic['italic']}{uic['grey']}No recipes available!{uic['reset']}\n")
-
-        # Display exit option
-        final_index = f"0)".ljust(4)
-        print(f"{uic['bold']}{final_index}Exit{uic['reset']}")
-        print()
-        
-        # Recieve valid input from user
-        print("Please enter the number of the recipe you'd like to craft")
-        user_input = input(">> ")
-
-        # Leave crafting menu when user chooses to exit
-        if user_input.lower() == '0':
-            break
-
-        if user_input not in index_map:
-            print("Invalid input! Please try again")
+            time.sleep(0.75)
+            clear_screen()
+            # Prompt the user for another input
             continue
 
-        # Craft the user's desired recipe.
-        recipe_final = index_map[user_input]
-        success = recipe_final.craft(inventory, item_list, recipe_final.id)
+        # Ensure selection stays in range
+        selected = max(0, min(selected, (len(craftables) - 1)))
         
-        # Display the crafting animation. Let the user know if crafting succeeded or failed.
-        print()
-        print("=" * 40)
-        print(f"{uic['bold']}{uic['orange']}Crafting Mode{uic['reset']}")
-        print("Crafting", end="", flush=True)
-        for i in range(3):
-            time.sleep(0.5)
-            print(".", end="", flush=True)
-        if success:
-            print(f"{uic['green']} success!{uic['reset']}", flush=True)
-            time.sleep(0.5)
-            item_name = item_list[recipe_final.id].name
-            item_color = item_list[recipe_final.id].rarity.color
-            print(f"{recipe_final.output}x {item_color}{item_name}{uic['reset']} has been added to your inventory", flush=True)
-        else:
-            print(f"{uic['red']} failed.{uic['reset']}", flush=True)
-            time.sleep(0.5)
-            print(f"Ingredients have been lost!", flush= True)
-            
-        print("=" * 40)
-        time.sleep(0.75)
-        # Prompt the user for another input
-        continue
-    # When user chooses to exit, return
+        # Display menu on key press or every 0.25 seconds
+        if key or last_draw + 0.25 <= time.time():
+            check_terminal_size(40)
+            print(TOP_LEFT_CURSOR, end="")
+            # Title
+            print(f"\n{uic['bold']}{uic['orange']}=== AVAILABLE RECIPES ==={uic['reset']}\n")
+
+            # Display formatted recipes and ingredients to the user
+            for i, recipe in enumerate(craftables):
+                # Place cursor arrow beside selected recipe
+                if i == selected:
+                    prefix = f">".ljust(4)
+                else:
+                    prefix = "".ljust(4)
+
+                if recipe != 0:
+                    # Display formatted recipe name and success rate
+                    recipe_color = item_list[recipe].rarity.color
+                    print(f"{uic['pink']}{prefix}{uic['reset']}{uic['bold']}"
+                        f"{recipe_color}{item_list[recipe].name} {uic['reset']}"
+                        f"({recipes[recipe].chance}% success rate)"
+                        )
+
+                    # Display individual ingredients and amounts
+                    for ingredient, amount in recipes[recipe].ingredients.items():
+                        ing_color = item_list[ingredient].rarity.color
+                        print(f"{'':<6}{uic['grey']}-{uic['reset']} {ing_color}"
+                            f"{item_list[ingredient].name:<{NAME_WIDTH}}"
+                            f"{uic['reset']} x{amount}")
+                    print()
+                # Display exit option    
+                else:
+                    print(f"{uic['pink']}{prefix}{uic['reset']}{uic['off_white']}"
+                          f"Return to {uic['arcane_purple']}The Workshop"
+                          f"{uic['reset']}")
+                    print()
+    print(SHOW_CURSOR, end="")
     return
+        
+
+# ===== Inventory Menus =====
+def inventory_menu(inventory):
+    """
+    Displays the inventory menu to the user. Shows their current inventory
+    contents and options to choose from.
+
+    Parameters:
+        inventory (object): A valid Inventory object
+
+    Returns:
+        str: The user's selected menu option
+    """
+
+    clear_screen()
+    # Initialize required placeholders
+    selections = [
+            "Crafting",
+            "Mining",
+            "Save and Exit"
+        ]
+    selected = 0
+    last_draw = 0
+    print(HIDE_CURSOR, end="")
+
+    while True:
+        check_terminal_size(40)
+        print(TOP_LEFT_CURSOR, end="")
+         # Check if user has made an input, map it if so
+        key = recieve_menu_key()
+        if key == 'UP':
+            selected -= 1
+        elif key == "DOWN":
+            selected += 1
+        elif key in ("SELECT", "LEFT", "RIGHT"):
+            # Map user selection
+            print(SHOW_CURSOR, end="")
+            return selections[selected]
+        # Ensure selection stays in range
+        selected = max(0, min(selected, (len(selections) - 1)))
+        
+        # Display menu on key press or every 0.25 seconds
+        if key or last_draw + 0.25 <= time.time():
+            print(f"{uic['orange']}===== INVENTORY ====={uic['reset']}")
+            display_inventory(inventory)
+            print()
+            print(f"{uic['grey']}=== Choose Option ==={uic['reset']}")
+            print()
+            # Display all options based on selection
+            for i, selection in enumerate(selections):
+                # Format the user's current selection
+                if i == selected:
+                    prefix = f">".ljust(4)
+                else:
+                    prefix = "".ljust(4)
+                
+                print(f"{uic['pink']}{prefix}{uic['reset']}{uic['off_white']}"
+                        f"{selection}{uic['reset']}")
+            
+    

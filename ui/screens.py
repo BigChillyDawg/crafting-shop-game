@@ -5,10 +5,25 @@ from game.rarity import Rarity
 import time
 import msvcrt
 import os
+import shutil
 
 def clear_screen():
     """ Clears the terminal screen """
     os.system('cls' if os.name == 'nt' else 'clear')
+
+def check_terminal_size(rows):
+    """ Ensures the terminal meets a given amount of rows """
+    while shutil.get_terminal_size().lines < rows:
+        clear_screen()
+        print("Your terminal is currently too small for gameplay!")
+        print("Please increase the amount of rows, press a key when ready.")
+        msvcrt.getch()
+        clear_screen()
+        if shutil.get_terminal_size().lines < rows:
+            print("Terminal is still too small, try again please!", flush=True)
+            time.sleep(1)
+            clear_screen()
+
 
 def welcome_screen():
     """
@@ -21,7 +36,7 @@ def welcome_screen():
     # Print characters 1 at a time
     for char in welcome:
         print(char, end="", flush=True)
-        time.sleep(0.1)
+        time.sleep(0.05)
     
     title1 = "ARCANE"
     title2 = "WORKSHOP!"
@@ -90,9 +105,12 @@ def travelling_screen(location, color):
     for char in '...':
         print(char, end="", flush=True)
         time.sleep(0.2)
+    clear_screen()
 
 def invalid_input_screen():
     """ Displays an invalid input screen. """
+
+    clear_screen()
     invalid = "Invalid input!"
     
     for char in invalid:
@@ -100,3 +118,4 @@ def invalid_input_screen():
         time.sleep(0.07)
     
     time.sleep(0.2)
+    clear_screen()

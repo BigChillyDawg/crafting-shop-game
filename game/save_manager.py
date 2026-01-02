@@ -30,10 +30,38 @@ def load_cooldowns(filepath, registry):
         cooldown_json = {}
 
     # Update last used for each mineshaft with a saved cooldown
-    for id, last_time in cooldown_json:
+    for id, last_time in cooldown_json.items():
         registry[id].cooldown.last_used = last_time
 
+def save_cooldowns(filepath, registry):
+    """
+    Saves cooldown state data for a given registry to a JSON file. Stores
+    object ID's as keys and their corresponding cooldown last-used timestamps
+    as values.
+    
+    Parameters:
+        filepath (object): A valid Path() object to a JSON file used to store
+                           cooldown data.
+        registry (dict): A dictionary mapping ID's to objects containing
+                         a Cooldown() instance.
+    
+    Returns:
+        None
+    """
+
+    cooldowns = {}
+
+    # Loop through a registry to find each cooldown's last use
+    for id, object in registry.items():
+        cooldowns[id] = object.cooldown.last_used
+
+    # Save the final list of cooldowns to the registry.
+    with filepath.open('w') as f:
+        json.dump(cooldowns, f)
+
+
 #  ===== Inventory Functions =====
+
 def load_inventory(inventory, item_list, filepath):
         """
         Loads saved data from a JSON file to the inventory. Converts ID's to
@@ -87,6 +115,7 @@ def save_inventory(inventory, filepath):
         json.dump(id_inventory, f)
 
 # ===== Mineshaft Functions =====
+
 def load_mineshafts(mineshaft_data, cooldown_save):
     """ 
     Loads recipes from a JSON data file into a dictionary containing ID's
