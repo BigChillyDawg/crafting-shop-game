@@ -66,7 +66,7 @@ def display_inventory(inventory):
     """Prints color coded inventory contents to the terminal. """
     
     # Print inventory title
-    print("\n\033[1;90m==== INVENTORY ====\033[0m")
+    print(f"{uic['orange']}===== INVENTORY ====={uic['reset']}")
 
     if not inventory.items:
         print("(Empty)")

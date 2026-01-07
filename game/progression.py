@@ -1,3 +1,4 @@
+from copy import deepcopy
 from json import load, dump
 
 # === Helper function to deal with drop changes with upgrades === 
@@ -11,19 +12,25 @@ def update_drops(object):
     Returns:
         None
     """
+    # Reset drops to base state
+    object.drops = deepcopy(object.base_drops)
     # Loop through each upgrade an object has
     for upgrade in object.upgrades.values():
+        # Check if the upgrade is owned.
+        if not upgrade["owned"]:
+            continue
         # New Drops 
-        if upgrade["new_drops"] and upgrade["owned"]:
+        if upgrade["new_drops"]:
             # Loop through each new drop and set its status to unlocked
             for drop in upgrade["new_drops"]:
                 object.drops[drop]["unlocked"] = True
 
         # Drop Modifiers
-        if upgrade["drop_modifier"] and upgrade["owned"]:
+        if upgrade["drop_modifier"]:
             for drop, multiplier in upgrade["drop_modifier"].items():
                 # Multiply each drop by the required modifier
-                object.drops[drop]["weight"] = object.drops[drop]["weight"] * multiplier
+                if drop in object.drops and "weight" in object.drops[drop]:
+                    object.drops[drop]["weight"] = object.drops[drop]["weight"] * multiplier
 
         # Rarity Modifiers
         if upgrade["rarity_modifier"]:

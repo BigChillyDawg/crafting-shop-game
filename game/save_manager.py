@@ -212,7 +212,13 @@ def load_items(filepath):
     # Converts item data into valid item objects.
     # Stores the items and their IDs and returns them as a dictionary.
     for id, item_data in item_json.items():
-        item_registry[id] = Item(id, item_data["name"], item_data["category"], rarity_map[item_data["rarity"]], item_data["stackable"], item_data["traits"])
+        item_registry[id] = Item(id, 
+                                 item_data["name"], 
+                                 item_data["category"], 
+                                 rarity_map[item_data["rarity"]], 
+                                 item_data["stackable"], 
+                                 item_data["traits"],
+                                 item_data["price"])
 
     return item_registry
 

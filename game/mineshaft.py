@@ -1,4 +1,5 @@
 from random import random
+from copy import deepcopy
 
 class Mineshaft:
     """
@@ -9,7 +10,8 @@ class Mineshaft:
         self.id = id
         self.name = name
         self.color = color
-        self.drops = drops
+        self.base_drops = deepcopy(drops)
+        self.drops = deepcopy(drops)
         self.upgrades = upgrades
         self.cooldown = cooldown
 

@@ -61,10 +61,9 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
         None
     """
     selected = 0
-    last_draw = 0
+    first_display = True
     while True:
         check_terminal_size(40)
-        print(TOP_LEFT_CURSOR, end="")
         divider_length = 40
         cooldown = mineshaft.cooldown
 
@@ -85,9 +84,14 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
         elif key in ("SELECT", "LEFT", "RIGHT"):
             # Map user selection
             option = selections[selected]
+        
+        # Ensure selection stays in range
+        selected = max(0, min(selected, (len(selections) - 1)))
 
-        # Display menu on key press or every 0.25 seconds
-        if key or last_draw + 0.25 <= time.time():
+        # Refresh menu on key press or first time the menu is displayed
+        if key or first_display:
+            first_display = False
+            clear_screen()
             # ===== Title =====
             print(f"{uic['bold']}{uic[mineshaft.color]}===== {mineshaft.name.upper()} ===== {uic['reset']}")
             print()
@@ -170,9 +174,6 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                 
                 print(f"{uic['pink']}{prefix}{uic['reset']}{uic['off_white']}"
                     f"{selection}{uic['reset']}")
-
-            # Ensure selection stays in range
-            selected = max(0, min(selected, (len(selections) - 1)))
             
             # Return to mining menu
             if option == 'Return to Mining Menu':
@@ -187,20 +188,25 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                     for i in range(3):
                         time.sleep(0.33)
                         print(f"{uic['off_white']}.{uic['reset']}", end="", flush=True)
+                    print()
 
                     # Complete the mine() action and store the result
                     result = mineshaft.mine(inventory, item_list, loot_table)
                     for item, amount in result.items():
-                        print(f"You recieved {item.rarity.color}{item.name}{uic['reset']} x{amount}")
-                        print(("=" * 40), flush=True)
+                        print(f"You recieved {item.rarity.color}{item.name}{uic['reset']} x{amount}", flush=True)
                         time.sleep(1)
                     clear_screen()
+                    first_display = True
                     continue
                 else:
                     clear_screen()
                     message = "Cooldown is not ready."
                     for char in message:
-                        print(f"{uic['italic']}{uic['grey']}{char}{uic['reset']}")
+                        print(f"{uic['italic']}{uic['grey']}{char}{uic['reset']}", flush=True, end="")
+                        time.sleep(0.07)
+                    print()
+                    time.sleep(1)
+                    first_display = True
                     clear_screen()
                     continue
 
@@ -209,7 +215,7 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                 clear_screen()
                 upgrade_selected = 0
                 while True:
-                    print(TOP_LEFT_CURSOR, end='')
+                    clear_screen()
                     print()
                     print(f"{uic['bold']}{uic['orange']}===== Available Upgrades ===== {uic['reset']}")
                     
@@ -245,12 +251,12 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                             upgrade = selection[1]
                             print(f"{uic['pink']}{prefix}{uic['reset']}{uic['bold']}"
                                 f"{upgrade['label']}{uic['reset']}")
-                            print(f"    {chr(8226)}{uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
-                            print(f"    {chr(8226)}{uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
+                            print(f"      {chr(8226)}{uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
+                            print(f"      {chr(8226)}{uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
                             # Display formatted upgrade cost
-                            print(f"    {chr(8226)}Cost:")
+                            print(f"      {chr(8226)}Cost:")
                             for item, amount in upgrade['cost'].items():
-                                print(" " * 6, end="")
+                                print(" " * 8, end="")
                                 print(f"{uic['pink']}- {uic['reset']}", end="")
                                 print(f"{item_list[item].rarity.color}"
                                     f"{item_list[item].name}{uic['reset']} "
@@ -268,10 +274,12 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
 
                     # Map user input
                     if key == 'UP':
-                        upgrade_selected -= 1
+                        upgrade_selected -= 1      
+                        upgrade_selected = max(0, min(upgrade_selected, (len(upgrade_selections) - 1)))
                         continue
                     elif key == "DOWN":
                         upgrade_selected += 1
+                        upgrade_selected = max(0, min(upgrade_selected, (len(upgrade_selections) - 1)))
                         continue
                     # If user chose to select, map their selection
                     elif key in ("SELECT", "LEFT", "RIGHT"):
@@ -280,6 +288,7 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                         # Return to the mine when user specifies
                         if upgrade_selection == 0:
                             clear_screen()
+                            first_display = True
                             break
                         
                         # Attempt to buy upgrade user specified
@@ -317,8 +326,8 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                             print(f"{uic['bold']}{uic['neon_green']}{char}{uic['reset']}", end="", flush=True)
                             time.sleep(0.07)
                         clear_screen()
-                    # Ensure selection stays in range
-                    upgrade_selected = max(0, min(upgrade_selected, (len(upgrade_selections) - 1)))
+        # Check for input every 0.1 seconds
+        time.sleep(0.1)
 
 def mining_menu(inventory, mineshafts, item_list, upgrades_save):
     """
@@ -439,7 +448,7 @@ def crafting_menu(inventory, recipes, item_list):
     # Display crafting menu and recieve valid input from the user
     NAME_WIDTH = 20
     selected = 0
-    last_draw = 0
+    first_display = True
     while True:
         # Initialize placeholders for craftable items and their indexes
         craftables = []
@@ -488,15 +497,17 @@ def crafting_menu(inventory, recipes, item_list):
             time.sleep(0.75)
             clear_screen()
             # Prompt the user for another input
+            first_display = True
             continue
 
         # Ensure selection stays in range
         selected = max(0, min(selected, (len(craftables) - 1)))
         
-        # Display menu on key press or every 0.25 seconds
-        if key or last_draw + 0.25 <= time.time():
+        # Display menu on key press or on first display
+        if key or first_display:
             check_terminal_size(40)
-            print(TOP_LEFT_CURSOR, end="")
+            clear_screen()
+            first_display = False
             # Title
             print(f"\n{uic['bold']}{uic['orange']}=== AVAILABLE RECIPES ==={uic['reset']}\n")
 
@@ -529,18 +540,19 @@ def crafting_menu(inventory, recipes, item_list):
                           f"Return to {uic['arcane_purple']}The Workshop"
                           f"{uic['reset']}")
                     print()
+        time.sleep(0.1)
     print(SHOW_CURSOR, end="")
     return
         
 
 # ===== Inventory Menus =====
-def inventory_menu(inventory):
+def inventory_menu(player):
     """
     Displays the inventory menu to the user. Shows their current inventory
     contents and options to choose from.
 
     Parameters:
-        inventory (object): A valid Inventory object
+        player (object): A valid Player() object
 
     Returns:
         str: The user's selected menu option
@@ -551,15 +563,15 @@ def inventory_menu(inventory):
     selections = [
             "Crafting",
             "Mining",
+            "Shop",
             "Save and Exit"
         ]
     selected = 0
-    last_draw = 0
+    first_display = True
     print(HIDE_CURSOR, end="")
 
     while True:
         check_terminal_size(40)
-        print(TOP_LEFT_CURSOR, end="")
          # Check if user has made an input, map it if so
         key = recieve_menu_key()
         if key == 'UP':
@@ -573,10 +585,15 @@ def inventory_menu(inventory):
         # Ensure selection stays in range
         selected = max(0, min(selected, (len(selections) - 1)))
         
-        # Display menu on key press or every 0.25 seconds
-        if key or last_draw + 0.25 <= time.time():
-            print(f"{uic['orange']}===== INVENTORY ====={uic['reset']}")
-            display_inventory(inventory)
+        # Display menu on key press or first display
+        if key or first_display:
+            first_display = False 
+            clear_screen()
+
+            display_inventory(player.inventory)
+            print()
+            print(f"{uic['bold']}{uic['yellow']}Coins: {uic['reset']}"
+                  f"{uic['yellow']}{player.wallet.balance}{uic['reset']}")
             print()
             print(f"{uic['grey']}=== Choose Option ==={uic['reset']}")
             print()
@@ -591,4 +608,296 @@ def inventory_menu(inventory):
                 print(f"{uic['pink']}{prefix}{uic['reset']}{uic['off_white']}"
                         f"{selection}{uic['reset']}")
             
+# ===== Shop Menu =====
+def shop_menu(player, item_list):
+    """
+    Displays the shop menu to the user. Allows them to buy and sell items.
+
+    Parameters:
+        player (object): A valid Player() object
+        item_list (dict): A dictionary containing the item registry.
+
+    Returns:
+        None
+    """
+
+    clear_screen()
+    print(HIDE_CURSOR, end="")
+    # Initialize required placeholders
+    first_display = True
+    selected = 0
+
+    # Define available selections
+    selections = []
+    for item in item_list.values():
+        selections.append(item)
+
+    # Sort selections by rarity
+    selections = sorted(selections, key=lambda x: x.rarity.value)
+
+    # Exit option
+    selections.append(0) 
     
+    while True:
+        check_terminal_size(40)
+         # Check if user has made an input, map it if so
+        key = recieve_menu_key()
+        if key == 'UP':
+            selected -= 1
+        elif key == "DOWN":
+            selected += 1
+        elif key in ("SELECT", "LEFT", "RIGHT"):
+            # Map user selection
+            selection = selections[selected]
+
+            # Exit shop if user specifies
+            if selection == 0:
+                travelling_screen("The Workshop", uic["arcane_purple"])
+                break
+
+            # Process buying an item
+            buy_sell_menu(selection, player)
+            first_display = True
+            print(HIDE_CURSOR, end="")
+            continue
+            
+        # Ensure selection stays in range
+        selected = max(0, min(selected, (len(selections) - 1)))
+        
+        # Display menu on key press or first display
+        if key or first_display:
+            first_display = False 
+            clear_screen()
+
+            print(f"{uic['bold']}{uic['dark_green']}===== SHOP ====="
+                  f"{uic['reset']}")
+            print()
+            print(f"{uic['bold']}{uic['yellow']}Coins: {uic['reset']}"
+                  f"{uic['yellow']}{player.wallet.balance}{uic['reset']}")
+            print()
+            print(f"{'Buy':>27}{'|':>4}{'Sell':>7}")
+
+            # Display all options based on selection
+            for i, selection in enumerate(selections):
+                
+                # Format the user's current selection
+                if i == selected:
+                    prefix = f">".ljust(4)
+                else:
+                    prefix = "".ljust(4)
+
+                if selection != 0:
+                    price = selection.price
+                    print(f"{uic['pink']}{prefix}{uic['reset']}"
+                        f"{selection.rarity.color}"
+                        f"{selection.name:<20}{uic['reset']}"
+                        f"{uic['yellow']}{(price * 2):<6}{uic['reset']}"
+                        f"{'|':<4}{uic['yellow']}{(price)}{uic['reset']}")
+                else:
+                    print()
+                    print(f"{uic['pink']}{prefix}{uic['reset']}"
+                          f"{uic['bold']}{uic['off_white']}Return to {uic['reset']}"
+                          f"{uic['arcane_purple']}The Workshop{uic['reset']}")
+                
+        time.sleep(0.1)
+    
+    print(SHOW_CURSOR, end="")
+
+def shop_history(history, item, player):
+    """ 
+    Helper function for buy_sell_menu(). Converts a list of shop history 
+    data in the form of entrys to alist of color formatted strings relating 
+    to user activity. 
+
+    Parameters:
+        history (list): List of entrys relating to user history in buy_sell_menu()
+        item (object): Item() that the user is buying/selling
+        player (object): The Player() interacting with the store
+    
+    Returns:
+        None
+    """
+
+    if len(history) > 10:
+        history = history[-10:]
+
+    history_output = []
+    
+    for entry in history:
+        action, amount, success = entry
+        # === Successful Purchase ===
+        if action == 'Buy' and success == True:
+            history_output.append(f"{uic['off_white']}{amount}x "
+            f"{item.rarity.color}{item.name}{uic['reset']} {uic['orange']}"
+            f"sucessfully purchased for {uic['reset']}{uic['yellow']}"
+            f"{amount * item.price * 2}{uic['reset']} {uic['green']}"
+            f"coins.")
+        # === Failed Purchase ===
+        elif action == 'Buy' and success == False:
+            history_output.append(f"{uic['off_white']}{amount}x "
+            f"{item.rarity.color}{item.name}{uic['reset']} {uic['italic']}"
+            f"{uic['grey']}requires {uic['reset']}{uic['yellow']}"
+            f"{amount * item.price * 2}{uic['reset']}{uic['italic']}"
+            f"{uic['grey']} more coins.{uic['reset']}")
+        # === Successful Sale ===
+        elif action == "Sell" and success == True:
+            history_output.append(f"{uic['off_white']}{amount}x "
+            f"{item.rarity.color}{item.name}{uic['reset']} {uic['green']}"
+            f"sucessfully sold for {uic['reset']}{uic['yellow']}"
+            f"{amount * item.price }{uic['reset']} {uic['green']}"
+            f"coins.")
+        # === Failed Sale ===
+        elif action == "Sell" and success == False:
+            # See how many more items player needs
+            if item not in player.inventory.items:
+                needed = amount
+            else:
+                needed = amount - player.inventory.items[item]
+            # Add the amount required to history
+            history_output.append(f"{uic['off_white']}{needed}x "
+            f"{uic['italic']}{uic['grey']}more {uic['reset']}"
+            f"{item.rarity.color}{item.name}{uic['reset']} {uic['italic']}"
+            f"{uic['grey']}required to sell.{uic['reset']}")
+        
+    return history_output
+
+def buy_sell_menu(item, player):
+    """
+    Displays the buy/sell menu for a specific item. Allows the user to
+    purchase or sell the item.
+
+    Parameters:
+        item (object): A valid Item() object
+        player (object): A valid Player() object
+
+    Returns:
+        None
+    """
+
+    inv = player.inventory
+    wallet = player.wallet
+    
+    clear_screen()
+    print(HIDE_CURSOR, end="")
+    first_display = True
+    selected = 0
+
+    # Define available selections
+    selections = [
+        "Buy 1",
+        "Buy 10",
+        "Sell 1",
+        "Sell 10",
+        "Sell All",
+        "Return to Shop"
+    ]
+
+    history = []
+
+    check_terminal_size(40)
+
+    while True:
+         # Check if user has made an input, map it if so
+        key = recieve_menu_key()
+        if key == 'UP':
+            selected -= 1
+        elif key == "DOWN":
+            selected += 1
+        elif key in ("SELECT", "LEFT", "RIGHT"):
+            # Map user selection
+            option = selections[selected]
+
+            # Return to shop if user specifies
+            if option == "Return to Shop":
+                clear_screen()
+                first_display = True
+                break
+
+            # Process buying or selling the item
+            # === Buying ===
+            if option.startswith("Buy"):
+                amount = int(option.split(" ")[1])
+                cost = amount * item.price * 2
+                # If player has enough coins, complete purchase
+                if wallet.spend_coins(cost):
+                    inv.add_item(item, amount)
+                    # Add message to user's history
+                    history.append(('Buy', amount, True))
+                # If player doesn't have enough coins
+                else: 
+                    history.append(('Buy', amount, False))
+                    pass
+            # === Selling ===
+            elif option.startswith("Sell") and option != "Sell All":
+                amount = int(option.split(" ")[1])
+                coins = amount * item.price
+                # If player has enough items
+                if inv.remove_item(item, amount):
+                    # Add coins and remove the amount from users inventory ^
+                    wallet.add_coins(coins)
+                    history.append(('Sell', amount, True))
+                # If player doesn't ahve enough items
+                else:
+                    history.append(('Sell', amount, False))
+            elif option == "Sell All":
+                # If user has more than 0 of the item
+                if item in inv.items:
+                    # Remove the items and add coins to users wallet
+                    amount = inv.items[item]
+                    coins = amount * item.price
+                    inv.remove_item(item, amount)
+                    wallet.add_coins(coins)
+                    history.append(('Sell', amount, True))
+                else:
+                    history.append(('Sell', amount, False))
+            
+        # Ensure selection stays in range
+        selected = max(0, min(selected, (len(selections) - 1)))
+        
+        # Display menu on key press or first display
+        if key or first_display:
+            first_display = False 
+            clear_screen()
+
+            history_display = shop_history(history, item, player)
+
+            print(f"{uic['bold']}{uic['dark_green']}===== SHOP ====="
+                  f"{uic['reset']}")
+            print()
+            print(f"{uic['bold']}{uic['yellow']}Coins: {uic['reset']}"
+                  f"{uic['yellow']}{wallet.balance}{uic['reset']}")
+            if item in inv.items:
+                quantity = inv.items[item]
+            else:
+                quantity = 0
+            print(f"{uic['bold']}{uic['orange']}Amount Owned: {uic['reset']}"
+                  f"{uic['off_white']}{quantity}x{uic['reset']}")
+            print()
+            print(f"{uic['bold']}{uic['off_white']}Item: {uic['reset']}"
+                  f"{item.rarity.color}{item.name}{uic['reset']}")
+            print(f"{uic['bold']}{uic['off_white']}Sell Price: {uic['reset']}"
+                  f"{uic['yellow']}{item.price}{uic['reset']} coins")
+            print(f"{uic['bold']}{uic['off_white']}Buy Price: {uic['reset']}"
+                  f"{uic['yellow']}{item.price * 2}{uic['reset']} coins")
+            print()
+
+            # Display all options based on selection
+            for i, selection in enumerate(selections):
+                # Format the user's current selection
+                if i == selected:
+                    prefix = f">".ljust(4)
+                else:
+                    prefix = "".ljust(4)
+
+                print(f"{uic['pink']}{prefix}{uic['reset']}{uic['off_white']}"
+                        f"{selection}{uic['reset']}")
+                
+            # Display current instance purchase history
+
+            if history_display:
+                print()
+                for message in history_display:
+                    print(message)
+        time.sleep(0.1)
+
+

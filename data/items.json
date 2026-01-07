@@ -4,62 +4,71 @@
         "category": "Mining",
         "rarity": "common",
         "stackable": true,
-        "traits": ["hard"]
+        "traits": ["hard"],
+        "price": 10
     },
     "iron_ore": {
         "name": "Iron Ore",
         "category": "Mining",
         "rarity": "uncommon",
         "stackable": true,
-        "traits": ["hard", "ore"]
+        "traits": ["hard", "ore"],
+        "price": 25
     },
     "gold_ore": {
         "name": "Gold Ore",
         "category": "Mining",
         "rarity": "rare",
         "stackable": true,
-        "traits": ["hard", "ore"]
+        "traits": ["hard", "ore"],
+        "price": 150
     },
     "iron_ingot": {
         "name": "Iron Ingot",
         "category": "Mining",
         "rarity": "rare",
         "stackable": true,
-        "traits": ["hard", "mineral"]
+        "traits": ["hard", "mineral"],
+        "price": 100
     },
     "gold_ingot": {
         "name": "Gold Ingot",
         "category": "Mining",
         "rarity": "epic",
         "stackable": true,
-        "traits": ["hard", "mineral", "valuable"]
+        "traits": ["hard", "mineral", "valuable"],
+        "price": 500
     },
     "fire_essence": {
         "name": "Fire Essence",
         "category": "Essence",
         "rarity": "uncommon",
         "stackable": true,
-        "traits": ["magic", "fire"]
+        "traits": ["magic", "fire"],
+        "price": 60
     },
     "water_essence": {
         "name": "Water Essence",
         "category": "Essence",
         "rarity": "uncommon",
         "stackable": true,
-        "traits": ["magic", "aquatic"]
+        "traits": ["magic", "aquatic"],
+        "price": 125
     },
     "void_essence": {
         "name": "Void Essence",
         "category": "Essence",
         "rarity": "epic",
         "stackable": true,
-        "traits": ["magic", "dark"]
+        "traits": ["magic", "dark"],
+        "price": 2000
     },
     "call_of_the_void": {
         "name": "Call of the Void",
         "category": "Artifacts",
         "rarity": "legendary",
         "stackable": true,
-        "traits": ["magic", "dark", "ancient"]
+        "traits": ["magic", "dark", "ancient"],
+        "price": 10000
     }
 }

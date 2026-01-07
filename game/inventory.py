@@ -42,25 +42,27 @@ class Inventory:
             quantity (int): The amount of the item to be added.
 
         Returns:
-            None
+            bool: A true/false value, true if player has enough of "item"
+                  false otherwise.
         """
 
         # Checks if the item is in the inventory, if the quanitity doesn't
         # exceed the amount of items in the inventory, and if the given 
         # quanitity is non negative. Raises errors if conditions aren't met.
         if item not in self.items:
-            raise KeyError(f"Item '{item.name}' not found in inventory")
+            return False
         if quantity > self.items[item]:
-            raise ValueError(f"Not enough '{item.name}' available")
+            return False
         if quantity <= 0:
-            raise ValueError("Quantity must be positive")
-        
+            raise ValueError("Quantity must be positive and greater than 0")
         # Removes the quantity of items from the inventory
         self.items[item] -= quantity
 
         # If quanitity is 0, remove the item from the inventory
         if self.items[item] == 0:
             del self.items[item]
+
+        return True
         
     def inventory_contents(self):
         """ Returns a copy of the inventory's contents. """
