@@ -5,9 +5,7 @@
             "description": "Upgrade to an iron support system, so you can focus on what matters most.",
             "features": "Doubles iron ore chance",
             "requires" : [],
-            "cost": {
-                "iron_ingot": 1
-            },
+            "cost": 100,
             "new_drops": {},
             "drop_modifier": {
                 "iron_ore": 2
@@ -20,9 +18,7 @@
             "description": "Go searching for the next best thing.",
             "features": "Unlocks gold ore",
             "requires" : [],
-            "cost": {
-                "stone": 5
-            },
+            "cost": 100,
             "new_drops": ["gold_ore"],
             "drop_modifier": {},
             "rarity_modifier": {},
@@ -33,9 +29,7 @@
             "description": "Gold, gold, gold! That's all that matters in the end.",
             "features": "Quadruples gold ore chance.",
             "requires" : ["iron_supports", "prospecting_1"],
-            "cost": {
-                "gold_ingot": 2
-            },
+            "cost": 500,
             "new_drops": {},
             "drop_modifier": {
                 "gold_ore": 4

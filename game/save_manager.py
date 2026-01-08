@@ -222,5 +222,50 @@ def load_items(filepath):
 
     return item_registry
 
+# === Wallet Functions ===
+
+def load_wallet(player, filepath):
+    """ 
+    Loads a saved balance to a player's wallet.
+    
+    Parameters:
+        filepath (object): A valid Path() object to a JSON file containing 
+                           a player's saved balance.
+        player (object): A Player() to receieve the saved balance
+    
+    Returns:
+        None
+    """
+
+    wallet = player.wallet
+
+    # Set the users balance to the specified values if it has been saved before.
+    if filepath.exists():
+        with filepath.open('r') as f:
+            wallet.set_coins(json.load(f)['balance'])
+
+    return
+
+def save_wallet(player, filepath):
+    """ 
+    Saves a saved balance to a json file.
+    
+    Parameters:
+        filepath (object): A valid Path() object to a JSON file containing 
+                           a player's saved balance.
+        player (object): A Player() to pull balance from to save to the JSON
+                         file.
+    
+    Returns:
+        None
+    """
+
+    balance_save = {'balance': player.wallet.balance}
+
+    # Set the users balance to the specified values if it has been saved before.
+    with filepath.open('w') as f:
+        json.dump(balance_save, f)
+
+    return
 
 

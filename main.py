@@ -22,6 +22,7 @@ mineshafts = save_manager.load_mineshafts(paths.MINESHAFTS_FILE, paths.MINESHAFT
 player = Player(Inventory(), Wallet())
 inv = player.inventory
 save_manager.load_inventory(inv, item_list, paths.INVENTORY_SAVE)
+save_manager.load_wallet(player, paths.BALANCE_SAVE)
 
 # Load any purchased upgrades
 progression.load_upgrades(mineshafts, paths.UPGRADES_FILE, paths.UPGRADES_SAVE)
@@ -47,7 +48,7 @@ while True:
 
     # Enter mining menu when user specifies
     if user_input == "Mining":
-        menus.mining_menu(inv, mineshafts, item_list, paths.UPGRADES_SAVE)
+        menus.mining_menu(player, mineshafts, item_list, paths.UPGRADES_SAVE)
     
     # Enter shop menu when user specifies
     if user_input == "Shop":
@@ -56,5 +57,6 @@ while True:
 # Save the inventory contents for next program instance
 save_manager.save_inventory(inv, paths.INVENTORY_SAVE)
 save_manager.save_cooldowns(paths.MINESHAFT_COOLDOWNS, mineshafts)
+save_manager.save_wallet(player, paths.BALANCE_SAVE)
 clear_screen()
 print("Your game has been saved. Thank you for playing!")

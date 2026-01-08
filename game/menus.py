@@ -5,6 +5,8 @@ from ui.screens import travelling_screen, clear_screen, check_terminal_size, dis
 from ui.colors import UI_COLORS as uic
 from ui.format import mins_seconds
 from game.progression import buy_upgrade
+from paths import BALANCE_SAVE
+from game.save_manager import save_wallet
 import json
 
 HIDE_CURSOR = "\033[?25l"
@@ -44,7 +46,7 @@ def recieve_menu_key(locked=False):
 
 # ===== Mining Menus =====
 
-def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
+def mineshaft_menu(mineshaft, player, item_list, upgrades_save):
     """
     Displays an individual mineshafts menu. Displaying features such as its
     upgrades, cooldown and drop rates.
@@ -60,6 +62,8 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
     Returns:
         None
     """
+    inventory = player.inventory
+    wallet = player.wallet
     selected = 0
     first_display = True
     while True:
@@ -154,17 +158,13 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                     continue
                 if id not in owned_upgrades:
                     print(f"[] {uic['bold']}{upgrade['label']}{uic['reset']}")
-                    print(f"    {chr(8226)} {uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
+                    print(f"    {chr(8226)} {uic['grey']}{uic['italic']}")
+                    print(f"{upgrade['description']}{uic['reset']}")
                     print(f"    {chr(8226)} {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
-                    print(f"    {chr(8226)} {uic['off_white']}Cost:{uic['reset']}")
-                    for item, amount in upgrade['cost'].items():
-                        print(" " * 6, end="")
-                        print(f"{uic['pink']}- {uic['reset']}", end="")
-                        print(f"{uic['off_white']}{item_list[item].name}{uic['reset']} {amount}x")
-                        print()
-            
+                    print(f"    {chr(8226)} {uic['off_white']}Cost: {uic['yellow']}{upgrade['cost']}{uic['reset']}")
             
             # Display all options based on selection
+            print()
             for i, selection in enumerate(selections):
                 # Format the user's current selection
                 if i == selected:
@@ -247,20 +247,14 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                             prefix = "".ljust(4)
 
                         if selection != 0:
-                            # Print upgrade name, description and features
+                            # Print upgrade name, description, features and cost
                             upgrade = selection[1]
                             print(f"{uic['pink']}{prefix}{uic['reset']}{uic['bold']}"
-                                f"{upgrade['label']}{uic['reset']}")
-                            print(f"      {chr(8226)}{uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
-                            print(f"      {chr(8226)}{uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
-                            # Display formatted upgrade cost
-                            print(f"      {chr(8226)}Cost:")
-                            for item, amount in upgrade['cost'].items():
-                                print(" " * 8, end="")
-                                print(f"{uic['pink']}- {uic['reset']}", end="")
-                                print(f"{item_list[item].rarity.color}"
-                                    f"{item_list[item].name}{uic['reset']} "
-                                    f"{amount}x")
+                                  f"{upgrade['label']}{uic['reset']}")
+                            print(f"      {chr(8226)} {uic['grey']}{uic['italic']}{upgrade['description']}{uic['reset']}")
+                            print(f"      {chr(8226)} {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
+                            print(f"      {chr(8226)} {uic['off_white']}{uic['bold']}Cost: {uic['reset']}"
+                                  f"{uic['yellow']}{upgrade['cost']}{uic['reset']}")
                             print()
                         
                         else:
@@ -269,7 +263,8 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                                 f"{uic['reset']}")
                             print()
 
-                    # Recieve an input from a user
+                    # Recieve an input from a user, locked so that menu only
+                    # updates on key press
                     key = recieve_menu_key(locked=True)
 
                     # Map user input
@@ -291,33 +286,26 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
                             first_display = True
                             break
                         
-                        # Attempt to buy upgrade user specified
+                        # Define required placeholders based on upgrade selection
                         upgrade_id = upgrade_selection[0]
-                        upgrade_cost = mineshaft.upgrades[upgrade_id]['cost']
+                        upgrade_object = upgrade_selection[1]
+                        upgrade_cost = upgrade_object['cost']
 
-                        # Compare user inventory to each item to check affordability.
-                        affordable = True
-                        for id, amount in upgrade_cost.items():
-                            if (item_list[id] in inventory.items and inventory.items[item_list[id]] < amount) \
-                                or item_list[id] not in inventory.items:
-                                # If user didn't have enough of a required item
-                                # let them know and flag affordability
+                        # Buy item if user has enough coins
+                        if not wallet.spend_coins(upgrade_cost):
+                            # If not, let them know and recieve a new selection
                                 clear_screen()
                                 message = "You don't have enough items!"
                                 for char in message:
                                     print(f"{uic['italic']}{uic['off_white']}{char}{uic['reset']}", end="", flush=True)
                                     time.sleep(0.07)
                                 clear_screen()
-                                affordable = False
-                                break
-
-                        # Check if user had all required items.
-                        if affordable == False:
-                            continue
+                                continue
 
                         # If user has all the required items, complete purchase.
                         owned_upgrades.append(upgrade_id)
-                        buy_upgrade(mineshaft, upgrade_id, inventory, item_list, upgrades_save)
+                        buy_upgrade(mineshaft, upgrade_id, upgrades_save)
+                        save_wallet(player, BALANCE_SAVE)
                         # Display sucessful purchase message
                         clear_screen()
                         upgrade_name = mineshaft.upgrades[upgrade_id]['label']
@@ -329,13 +317,13 @@ def mineshaft_menu(mineshaft, inventory, item_list, upgrades_save):
         # Check for input every 0.1 seconds
         time.sleep(0.1)
 
-def mining_menu(inventory, mineshafts, item_list, upgrades_save):
+def mining_menu(player, mineshafts, item_list, upgrades_save):
     """
     Displays mining menu to the user. Determines the shaft the user would
     like to mine in and processes any actions they'd like to take.
 
     Parameters:
-        inventory (object): A valid inventory object
+        player (object): A valid Player() object
         mineshafts (dict): A dictionary containing the mineshafts registry
         item_list (dict): A dictionary containing the item registry
     
@@ -385,7 +373,7 @@ def mining_menu(inventory, mineshafts, item_list, upgrades_save):
             travelling_screen(mineshaft.name, uic[mineshaft.color])
 
             # Display mineshaft menu
-            mineshaft_menu(mineshaft, inventory, item_list, upgrades_save)
+            mineshaft_menu(mineshaft, player, item_list, upgrades_save)
 
         # Ensure selection stays in range
         selected = max(0, min(selected, (len(selections) - 1)))

@@ -42,16 +42,14 @@ def update_drops(object):
             # NEEDS TO BE DONE
             pass
 
-def buy_upgrade(object, upgrade_id, inventory, item_list, upgrades_save):
+def buy_upgrade(object, upgrade_id, upgrades_save):
     """ 
     Applies an upgrade and deducts funds or items required to purchase it from
     a user's inventory.
     
     Parameters:
         object (object): A valid object to apply the upgrade to.
-        upgrade (str): The ID of a corresponding upgrade
-        inventory (object): An Inventory() object to deduct items from
-        item_list (dict): A registry mapping item ID's to objects
+        upgrade_id (str): The ID of a corresponding upgrade
         upgrades_save (object): A valid Path() object to a JSON file containing
                                 save info of upgrades a player has unlocked.
     
@@ -73,10 +71,6 @@ def buy_upgrade(object, upgrade_id, inventory, item_list, upgrades_save):
     # Save the upgrades data once more
     with upgrades_save.open("w") as f:
         dump(owned_upgrades, f)
-
-    # Deduct the cost from the user's inventory
-    for item, amount in object.upgrades[upgrade_id]["cost"].items():
-        inventory.remove_item(item_list[item], amount)
 
     # Handle any drop changes due to the upgrade
     update_drops(object)

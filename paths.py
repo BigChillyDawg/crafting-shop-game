@@ -16,6 +16,7 @@ COOLDOWN_SAVE.mkdir(parents=True, exist_ok=True)
 # Save data
 INVENTORY_SAVE = SAVE / "inventory.json"
 UPGRADES_SAVE = SAVE / "owned_upgrades.json"
+BALANCE_SAVE = SAVE / "balance.json"
 MINESHAFT_COOLDOWNS = COOLDOWN_SAVE / "saved_cooldowns.json"
 
 # Game data

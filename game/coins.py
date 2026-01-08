@@ -32,3 +32,16 @@ class Wallet():
             return False
         self.balance -= amount
         return True
+    
+    def set_coins(self, amount):
+        """ 
+        Sets the balance to a specified value.
+        Parameters:
+            amount (int): The amount of coins to set the balance to.
+
+        Returns:
+            None
+        """
+
+        self.balance = amount
+        return
