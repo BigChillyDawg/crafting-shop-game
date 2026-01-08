@@ -2,18 +2,24 @@ from copy import deepcopy
 from json import load, dump
 
 # === Helper function to deal with drop changes with upgrades === 
-def update_drops(object):
+def update_upgrades(object, item_list):
     """
-    Loops through an objects upgrades and unlocks any purchased drops.
+    Loops through an objects upgrades and unlocks any purchased drops, modifies
+    drop rates based on owned upgrades, and applies any cooldown changes.
 
     Parameters:
         object (object): A valid object containing drops
+        item_list (dict): A registry mapping item ID's to item objects
 
     Returns:
         None
     """
     # Reset drops to base state
     object.drops = deepcopy(object.base_drops)
+
+    # Reset cooldown to base cooldown
+    object.cooldown.duration = object.base_cooldown_duration
+
     # Loop through each upgrade an object has
     for upgrade in object.upgrades.values():
         # Check if the upgrade is owned.
@@ -34,15 +40,22 @@ def update_drops(object):
 
         # Rarity Modifiers
         if upgrade["rarity_modifier"]:
-            # NEEDS TO BE DONE
-            pass
+            # Loop through each rarity and corresponding multiplier
+            for rarity, multiplier in upgrade["rarity_modifier"].items():
+                # Loop through each drop the mineshaft has
+                for id, drop in object.drops.items():
+                    # Check if the drop matches the corresponding rarity
+                    # Apply multiplier if so
+                    if item_list[id].rarity.label.lower() == rarity:   
+                        drop['weight'] = drop['weight'] * multiplier
 
         # Cooldown Modifier
         if upgrade["cooldown_modifier"] != "none":
-            # NEEDS TO BE DONE
-            pass
+            # Update cooldown duration based on modifier
+            object.cooldown.duration = (object.cooldown.duration * 
+                                       (1 - upgrade["cooldown_modifier"]))
 
-def buy_upgrade(object, upgrade_id, upgrades_save):
+def buy_upgrade(object, upgrade_id, upgrades_save, item_list):
     """ 
     Applies an upgrade and deducts funds or items required to purchase it from
     a user's inventory.
@@ -73,9 +86,9 @@ def buy_upgrade(object, upgrade_id, upgrades_save):
         dump(owned_upgrades, f)
 
     # Handle any drop changes due to the upgrade
-    update_drops(object)
+    update_upgrades(object, item_list)
 
-def load_upgrades(registry, upgrades_data, upgrades_save):
+def load_upgrades(registry, upgrades_data, upgrades_save, item_list):
     """
     Applies upgrade ownership states to each object in a given registry 
     from a JSON file. Determines if an upgrade is owned or still locked 
@@ -126,4 +139,4 @@ def load_upgrades(registry, upgrades_data, upgrades_save):
 
         # Update the object's upgrades.
         object.upgrades = upgrades
-        update_drops(object)
+        update_upgrades(object, item_list)

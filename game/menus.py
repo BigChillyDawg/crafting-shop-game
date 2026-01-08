@@ -119,10 +119,11 @@ def mineshaft_menu(mineshaft, player, item_list, upgrades_save):
                     loot_table[drop] = total_weight
 
             # Display drops and drop rates from the loot table, sorted by rarity
-            for drop in sorted(loot_table, key=lambda d: mineshaft.drops[d]['weight'], reverse=True):
-                item = item_list[drop]
-                print(f"{item.rarity.color}{item.name:<20}{uic['reset']}{(mineshaft.drops[drop]['weight'] / total_weight * 100):.2f}%")
-            print("\n")
+            if loot_table:
+                for drop in sorted(loot_table, key=lambda d: mineshaft.drops[d]['weight'], reverse=True):
+                    item = item_list[drop]
+                    print(f"{item.rarity.color}{item.name:<20}{uic['reset']}{(mineshaft.drops[drop]['weight'] / total_weight * 100):.2f}%")
+                print("\n")
 
             # ===== UPGRADES =====
             print("-" * divider_length)
@@ -158,13 +159,13 @@ def mineshaft_menu(mineshaft, player, item_list, upgrades_save):
                     continue
                 if id not in owned_upgrades:
                     print(f"[] {uic['bold']}{upgrade['label']}{uic['reset']}")
-                    print(f"    {chr(8226)} {uic['grey']}{uic['italic']}")
-                    print(f"{upgrade['description']}{uic['reset']}")
+                    print(f"    {chr(8226)} {uic['grey']}{uic['italic']}"
+                          f"{upgrade['description']}{uic['reset']}")
                     print(f"    {chr(8226)} {uic['off_white']}{uic['bold']}{upgrade['features']}{uic['reset']}")
                     print(f"    {chr(8226)} {uic['off_white']}Cost: {uic['yellow']}{upgrade['cost']}{uic['reset']}")
+                    print()
             
             # Display all options based on selection
-            print()
             for i, selection in enumerate(selections):
                 # Format the user's current selection
                 if i == selected:
@@ -182,6 +183,20 @@ def mineshaft_menu(mineshaft, player, item_list, upgrades_save):
 
             # ===== Mine =====
             elif option == 'Mine':
+                # Check if any drops are unlocked, continue if not
+                if not loot_table:
+                    clear_screen()
+                    message = "No drops are currently unlocked."
+                    for char in message:
+                        print(f"{uic['italic']}{uic['grey']}{char}{uic['reset']}", flush=True, end="")
+                        time.sleep(0.07)
+                    print()
+                    time.sleep(1)
+                    first_display = True
+                    clear_screen()
+                    continue
+
+                # Check if cooldown is ready, mine if so.
                 if cooldown.trigger():
                     clear_screen()
                     print(f"{uic['off_white']}Mining{uic['reset']}", end="", flush=True)
@@ -198,6 +213,8 @@ def mineshaft_menu(mineshaft, player, item_list, upgrades_save):
                     clear_screen()
                     first_display = True
                     continue
+
+                # If cooldown is not ready, let the user know
                 else:
                     clear_screen()
                     message = "Cooldown is not ready."
@@ -294,17 +311,17 @@ def mineshaft_menu(mineshaft, player, item_list, upgrades_save):
                         # Buy item if user has enough coins
                         if not wallet.spend_coins(upgrade_cost):
                             # If not, let them know and recieve a new selection
-                                clear_screen()
-                                message = "You don't have enough items!"
-                                for char in message:
-                                    print(f"{uic['italic']}{uic['off_white']}{char}{uic['reset']}", end="", flush=True)
-                                    time.sleep(0.07)
-                                clear_screen()
-                                continue
+                            clear_screen()
+                            message = "You don't have enough coins!"
+                            for char in message:
+                                print(f"{uic['italic']}{uic['off_white']}{char}{uic['reset']}", end="", flush=True)
+                                time.sleep(0.07)
+                            clear_screen()
+                            continue
 
                         # If user has all the required items, complete purchase.
                         owned_upgrades.append(upgrade_id)
-                        buy_upgrade(mineshaft, upgrade_id, upgrades_save)
+                        buy_upgrade(mineshaft, upgrade_id, upgrades_save, item_list)
                         save_wallet(player, BALANCE_SAVE)
                         # Display sucessful purchase message
                         clear_screen()
@@ -736,8 +753,12 @@ def shop_history(history, item, player):
             f"coins.")
         # === Failed Sale ===
         elif action == "Sell" and success == False:
-            # See how many more items player needs
-            if item not in player.inventory.items:
+            # See how many items the user has, if none, set owned to 0.
+            owned = player.inventory.items.get(item, 0)
+
+            if owned == 0 and amount == 0:
+                needed = 1
+            elif owned == 0:
                 needed = amount
             else:
                 needed = amount - player.inventory.items[item]
@@ -837,6 +858,7 @@ def buy_sell_menu(item, player):
                     wallet.add_coins(coins)
                     history.append(('Sell', amount, True))
                 else:
+                    amount = 0
                     history.append(('Sell', amount, False))
             
         # Ensure selection stays in range

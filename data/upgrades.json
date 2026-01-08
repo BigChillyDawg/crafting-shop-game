@@ -36,6 +36,28 @@
             },
             "rarity_modifier": {},
             "cooldown_modifier": "none"
+        },
+        "rare_find": {
+            "label": "Rare Find",
+            "description": "This has to be worth something...",
+            "features": "Triples chance of recieiving rare items",
+            "requires" : ["iron_supports", "prospecting_1", "gold_rush_1"],
+            "cost": 500,
+            "new_drops": {},
+            "drop_modifier": {},
+            "rarity_modifier": {"rare": 3},
+            "cooldown_modifier": "none"
+        },
+        "faster_minecarts": {
+            "label": "Faster Minecarts",
+            "description": "Hurry up already, there's bills to pay.",
+            "features": "Decreases cooldown by 25%",
+            "requires" : ["iron_supports", "prospecting_1", "gold_rush_1"],
+            "cost": 250,
+            "new_drops": {},
+            "drop_modifier": {},
+            "rarity_modifier": {},
+            "cooldown_modifier": 0.25
         }
     }
 }

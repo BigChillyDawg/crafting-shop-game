@@ -1,4 +1,4 @@
-from random import random
+from random import uniform
 from copy import deepcopy
 
 class Mineshaft:
@@ -14,6 +14,7 @@ class Mineshaft:
         self.drops = deepcopy(drops)
         self.upgrades = upgrades
         self.cooldown = cooldown
+        self.base_cooldown_duration = cooldown.duration
 
     def mine(self, inventory, item_list, loot_table):
         """
@@ -28,30 +29,38 @@ class Mineshaft:
                                drops and their weightings
 
         Returns:
-            (dict): A dictionary of Item() objects and aquired amounts.
+            (dict): A dictionary of Item() objects and acquired amounts.
         """
 
         # Initialize a dictionary to store final mining rewards
         rewards = {}
-
+        reward = None
+        # Return an empty dict of rewards if no loot table is provided.
+        if not loot_table:
+            return rewards
         # Creates a roll multiplied by the highest value in the loot table.
         # Returns the corresponding item within the loot table's range.
         # Ex: {"item1": 20, "item2": 30}. A roll of 25 returns item2.
-        roll = random() * next(reversed(loot_table.values()), None)
-        for drop, range in loot_table.items():
-            if roll > range:
+        roll = uniform(0, max(loot_table.values()))
+        for drop, weight in loot_table.items():
+            if roll > weight:
                 continue
             reward = drop
             break
 
-        # Establish the amount of the reward the user recieved from mining.
+        # Check if a reward was found, if not, return the empty dictionary.
+        # This shouldn't happen, but is there just in case.
+        if reward is None:
+            return rewards
+
+        # Establish the amount of the reward the user received from mining.
         # Upgrades can be added here later to increase the amount.
         amount = self.drops[reward]["amount"]
 
-        # Add the item and specified amount to the users inventory
+        # Add the item and specified amount to the user's inventory
         inventory.add_item(item_list[reward], amount)
 
-        # Save the item and recieved amount to the rewards dictionary.
+        # Save the item and received amount to the rewards dictionary.
         rewards[item_list[reward]] = amount
 
         return rewards

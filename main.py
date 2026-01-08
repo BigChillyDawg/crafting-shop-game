@@ -25,7 +25,7 @@ save_manager.load_inventory(inv, item_list, paths.INVENTORY_SAVE)
 save_manager.load_wallet(player, paths.BALANCE_SAVE)
 
 # Load any purchased upgrades
-progression.load_upgrades(mineshafts, paths.UPGRADES_FILE, paths.UPGRADES_SAVE)
+progression.load_upgrades(mineshafts, paths.UPGRADES_FILE, paths.UPGRADES_SAVE, item_list)
 
 # Colors for use in menu
 GREY = UI_COLORS["grey"]
